@@ -4,11 +4,11 @@ Builds `dashboard`, the IFNOTGOD TECH team's internal tool, from the approved [d
 
 **Architecture:** a Next.js app with TypeScript, used only by our team. It stores no data: everything goes through the Django `backend` API, which owns data, login and the rules. The screens are built first, against a stand-in backend in `src/lib/api`, as `WEB` did for its account screens. When the backend starts, each screen is connected to the real API in vertical slices (phase 7), without changing the screens.
 
-**Status:** phases 1 and 2 are built and tested, not yet committed. Phase 3 is next. Tick items only after they're confirmed working.
+**Status:** phases 1 and 2 are pushed. Phase 3 is built and tested on `feat/clients`, not yet committed. Phase 4 is next. Tick items only after they're confirmed working.
 
 ## Decided
 
-- [x] **Repo:** its own private repo, separate from the public `WEB` repo (8 November 2026).
+- [x] **Repo:** its own repo, `ifnotGodTech/team-ifnotGodtech`, separate from `WEB` (8 November 2026). It's currently public, not private as first planned. Revisit before real client data or backend details go in.
 - [x] **Address:** `team.ifnotgod.com`, on the same domain as the API so the login cookie works on both (8 November 2026).
 - [x] **Hosting:** Vercel, like `WEB` (8 November 2026).
 - [x] **Staff sessions:** a secure cookie the browser's scripts can't read, ending after 1 hour without activity (8 November 2026).
@@ -68,11 +68,11 @@ The API it will need: staff log in, log out, and "who is signed in", with the se
 
 The API it will need: search clients, and one client's details and account history. Sending a password reset email.
 
-- [ ] Build **Clients** from the mock: search by name, business or email, run on the server, with paging for long lists.
-- [ ] Build **Client details**: account details, how they sign in, when they joined, and their history with who made each change.
-- [ ] Add "Send a password reset email", with a confirmation.
-- [ ] Show only what each task needs, with no exports.
-- [ ] Tests: search and empty results, the details page's states, and the reset email flow.
+- [x] Build **Clients** from the mock: search by name, business or email, run on the server, with paging for long lists.
+- [x] Build **Client details**: account details, how they sign in, when they joined, and their history with who made each change.
+- [x] Add "Send a password reset email", with a confirmation.
+- [x] Show only what each task needs, with no exports.
+- [x] Tests: search and empty results, the details page's states, and the reset email flow.
 
 ## Phase 4: Subscriptions
 

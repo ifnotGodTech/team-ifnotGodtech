@@ -1,11 +1,16 @@
 import { expect, test } from "@playwright/test";
 import { logIn, STAND_IN_CODE } from "./helpers";
 
-async function reachCodeStep(page: import("@playwright/test").Page, email = "tunde@ifnotgod.com") {
+async function submitPassword(page: import("@playwright/test").Page, email = "tunde@ifnotgod.com") {
   await page.goto("/login");
   await page.getByLabel("Work email").fill(email);
   await page.getByLabel("Password").fill("a password");
   await page.getByRole("button", { name: "Continue" }).click();
+}
+
+async function reachCodeStep(page: import("@playwright/test").Page) {
+  await submitPassword(page);
+  await page.waitForURL(/\/login\/code$/);
 }
 
 test("signed-out visitors are sent to log in, then back to where they were going", async ({ page }) => {
@@ -39,7 +44,7 @@ test("a wrong password is explained, keeping the email", async ({ page }) => {
 });
 
 test("a locked account is explained", async ({ page }) => {
-  await reachCodeStep(page, "locked@ifnotgod.com");
+  await submitPassword(page, "locked@ifnotgod.com");
 
   await expect(page.locator("main form").getByRole("alert")).toContainText("Too many attempts");
 });
@@ -48,8 +53,12 @@ test("a wrong code is explained, and 5 wrong codes start the log in again", asyn
   await reachCodeStep(page);
 
   // Each attempt shows the same message, so wait for each one's response before the next.
+  // React clears the form after each attempt, so wait for that before typing the next code.
   const tryCode = async () => {
-    await page.getByLabel("Code", { exact: true }).fill("000000");
+    const field = page.getByLabel("Code", { exact: true });
+    await expect(field).toHaveValue("");
+    await field.fill("000000");
+    await expect(field).toHaveValue("000000");
     await Promise.all([
       page.waitForResponse((response) => response.request().method() === "POST"),
       page.getByRole("button", { name: "Log in" }).click(),
