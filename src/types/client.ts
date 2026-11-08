@@ -37,4 +37,9 @@ export type ClientPage = {
   pageSize: number;
 };
 
-export type ClientSearch = { query: string; page: number };
+export type ClientSearch = {
+  query: string;
+  page: number;
+  /** Only clients who have signed up but not subscribed, or whose plan has ended. */
+  withoutPlan?: boolean;
+};

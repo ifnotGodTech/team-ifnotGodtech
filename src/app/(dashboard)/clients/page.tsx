@@ -34,23 +34,32 @@ const COLUMNS = [
 
 export default async function ClientsPage({ searchParams }: PageProps<"/clients">) {
   await requireStaff();
-  const { q, page } = await searchParams;
+  const { q, page, plan } = await searchParams;
   const query = typeof q === "string" ? q.trim().slice(0, 100) : "";
-  const result = await getBackend().searchClients({ query, page: Number(page) || 1 });
+  const withoutPlan = plan === "none";
+  const result = await getBackend().searchClients({ query, page: Number(page) || 1, withoutPlan });
+  const total = result.ok ? result.data.total : 0;
+  const counted = `${total} ${total === 1 ? "client" : "clients"}${withoutPlan ? " without a plan" : ""}`;
 
   return (
     <>
       <PageHeader title="Clients" intro="Everyone with an account on the website." />
-      <ClientSearch query={query} />
+      <ClientSearch query={query} withoutPlan={withoutPlan} />
+      {withoutPlan && (
+        <p className="flex flex-wrap gap-x-3 text-text-dim">
+          Showing clients who signed up but haven&apos;t subscribed, or whose plan has ended.
+          <Link href={query ? `/clients?q=${encodeURIComponent(query)}` : "/clients"} className="font-semibold text-maroon underline">
+            Show all clients
+          </Link>
+        </p>
+      )}
 
       {!result.ok ? (
         <ErrorState message={result.error.message} action={<Link href="/clients" className="font-semibold text-maroon underline">Try again</Link>} />
       ) : (
         <>
           <p role="status" className="text-text-dim">
-            {query
-              ? `${result.data.total} ${result.data.total === 1 ? "client matches" : "clients match"} “${query}”`
-              : `${result.data.total} ${result.data.total === 1 ? "client" : "clients"}`}
+            {query ? `${counted} ${total === 1 ? "matches" : "match"} “${query}”` : counted}
           </p>
           <DataTable
             label="Client list"
@@ -58,12 +67,16 @@ export default async function ClientsPage({ searchParams }: PageProps<"/clients"
             rows={result.data.items}
             rowKey={(client) => client.id}
             empty={
-              <EmptyState title={query ? "No clients match your search" : "No clients yet"}>
-                {query ? "Check the spelling, or search by email instead." : "Clients appear here when they create an account on the website."}
-              </EmptyState>
+              query ? (
+                <EmptyState title="No clients match your search">Check the spelling, or search by email instead.</EmptyState>
+              ) : withoutPlan ? (
+                <EmptyState title="Every client has a plan">Clients who sign up without subscribing appear here.</EmptyState>
+              ) : (
+                <EmptyState title="No clients yet">Clients appear here when they create an account on the website.</EmptyState>
+              )
             }
           />
-          <Pagination {...result.data} query={query} />
+          <Pagination {...result.data} query={query} withoutPlan={withoutPlan} />
         </>
       )}
     </>

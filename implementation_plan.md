@@ -4,7 +4,7 @@ Builds `dashboard`, the IFNOTGOD TECH team's internal tool, from the approved [d
 
 **Architecture:** a Next.js app with TypeScript, used only by our team. It stores no data: everything goes through the Django `backend` API, which owns data, login and the rules. The screens are built first, against a stand-in backend in `src/lib/api`, as `WEB` did for its account screens. When the backend starts, each screen is connected to the real API in vertical slices (phase 7), without changing the screens.
 
-**Status:** phases 1 to 3 are pushed. Phase 4 is built and tested on `feat/subscriptions`, not yet committed. Phase 5 is next. Tick items only after they're confirmed working.
+**Status:** phases 1 to 4 are pushed. Phase 5 is built and tested on `feat/overview`, not yet committed. Phase 6 is next. Tick items only after they're confirmed working.
 
 ## Decided
 
@@ -90,8 +90,8 @@ The API it will need: list and filter subscriptions; one client's subscription, 
 
 The API it will need: counts of active subscriptions and monthly income, renewals in the next 7 days with reminder status, cancelled plans still running, clients without a plan, and recent changes with who made them.
 
-- [ ] Build **Overview** from the mock, with each count linking to the filtered list behind it.
-- [ ] Tests: the counts' links, empty states, and the backend being unreachable.
+- [x] Build **Overview** from the mock, with each count linking to the filtered list behind it. Clients gained a "without a plan" filter for this.
+- [x] Tests: the counts' links, empty states, and the backend being unreachable.
 
 ## Phase 6: Site content
 

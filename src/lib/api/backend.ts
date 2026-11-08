@@ -1,5 +1,6 @@
 import type { Catalogue, PlanId } from "@/types/catalogue";
 import type { ClientDetail, ClientPage, ClientSearch } from "@/types/client";
+import type { Overview } from "@/types/overview";
 import type { ClientSubscription, SubscriptionFilter, SubscriptionList } from "@/types/subscription";
 import type { LoginChallenge, StaffMember } from "@/types/staff";
 import type { ApiResult } from "./errors";
@@ -16,6 +17,9 @@ export type DashboardBackend = {
   getClient(id: string): Promise<ApiResult<ClientDetail>>;
   /** Emails the client a link to set a new password. Only for clients who sign in with a password. */
   sendPasswordReset(id: string, staffEmail: string): Promise<ApiResult<null>>;
+
+  /** Counts, upcoming renewals and recent changes for the overview page. */
+  getOverview(): Promise<ApiResult<Overview>>;
 
   /** Plans and services, as the website shows them. */
   getCatalogue(): Promise<ApiResult<Catalogue>>;

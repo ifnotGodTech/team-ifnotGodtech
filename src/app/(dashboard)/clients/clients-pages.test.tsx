@@ -36,6 +36,15 @@ describe("clients list", () => {
     expect(screen.getByRole("link", { name: "Clear search" })).toHaveAttribute("href", "/clients");
   });
 
+  it("lists clients without a plan, keeping that filter while searching", async () => {
+    render(await list({ plan: "none" }));
+
+    expect(screen.getByRole("status")).toHaveTextContent("3 clients without a plan");
+    expect(screen.getByRole("search").querySelector('input[name="plan"]')).toHaveValue("none");
+    expect(screen.getByRole("link", { name: "Show all clients" })).toHaveAttribute("href", "/clients");
+    expect(screen.queryByRole("link", { name: "Ada Obi" })).not.toBeInTheDocument();
+  });
+
   it("explains a search with no matches", async () => {
     render(await list({ q: "nobody" }));
 

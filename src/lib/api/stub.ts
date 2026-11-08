@@ -21,6 +21,7 @@ export const STUB_RULES = {
 
 export const CODE_LIFETIME_MS = 10 * 60 * 1000;
 export const CLIENTS_PAGE_SIZE = 10;
+export const RECENT_CHANGES_SHOWN = 8;
 
 const summaryOf = ({ id, fullName, businessName, email, planName, planStatus, joinedOn }: ClientSummary): ClientSummary => ({
   id,
@@ -157,11 +158,11 @@ export function createStubBackend(now = () => Date.now(), store: StubStore = coo
       return ok(challengeFor(challenge.email, now()));
     },
 
-    async searchClients({ query, page }) {
+    async searchClients({ query, page, withoutPlan = false }) {
       const words = query.trim().toLowerCase();
       const clients = await Promise.all(STUB_CLIENTS.map(liveClient));
       const matches = clients.filter((client) =>
-        !words || [client.fullName, client.businessName ?? "", client.email].some((value) => value.toLowerCase().includes(words))
+        (!withoutPlan || client.planStatus === "none") && (!words || [client.fullName, client.businessName ?? "", client.email].some((value) => value.toLowerCase().includes(words)))
       ).sort((a, b) => b.joinedOn.localeCompare(a.joinedOn));
 
       const pages = Math.max(1, Math.ceil(matches.length / CLIENTS_PAGE_SIZE));
@@ -182,6 +183,41 @@ export function createStubBackend(now = () => Date.now(), store: StubStore = coo
         return { ok: false, error: apiError("VALIDATION", 422, { message: "This client signs in with Google, so there's no password to reset." }) };
       }
       return ok(null);
+    },
+
+    async getOverview() {
+      const { byClient } = await subscriptions();
+      const date = today();
+      const clients = await Promise.all(STUB_CLIENTS.map(liveClient));
+      const entries = Object.entries(byClient);
+      const active = entries.filter(([, subscription]) => subscription.status === "active");
+      const cancelledEnds = entries
+        .filter(([, subscription]) => subscription.status === "cancelled")
+        .map(([, subscription]) => subscription.currentPeriodEnd)
+        .sort();
+
+      return ok({
+        activeSubscriptions: active.length,
+        monthlyIncome: active.reduce((sum, [, subscription]) => sum + (planNamed(subscription.planId).monthlyPrice ?? 0), 0),
+        renewingSoon: active
+          .filter(([, subscription]) => matchesFilter(subscription, "renewing", date))
+          .sort(([, a], [, b]) => a.currentPeriodEnd.localeCompare(b.currentPeriodEnd))
+          .map(([clientId, subscription]) => ({
+            clientId,
+            clientName: clients.find((client) => client.id === clientId)!.fullName,
+            planName: planNamed(subscription.planId).name,
+            billingPeriod: subscription.billingPeriod,
+            renewsOn: subscription.currentPeriodEnd,
+            reminder: subscription.reminder,
+          })),
+        cancelledStillRunning: cancelledEnds.length,
+        nextCancellationEnds: cancelledEnds[0] ?? null,
+        clientsWithoutPlan: clients.filter((client) => client.planStatus === "none").length,
+        recentChanges: clients
+          .flatMap((client) => client.history.map((entry) => ({ ...entry, clientId: client.id, clientName: client.fullName })))
+          .sort((a, b) => b.at.localeCompare(a.at))
+          .slice(0, RECENT_CHANGES_SHOWN),
+      });
     },
 
     async getCatalogue() {
