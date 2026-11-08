@@ -9,7 +9,8 @@ Builds `dashboard`, the IFNOTGOD TECH team's internal tool, from the approved [d
 ## Decided
 
 - [x] **Repo:** its own repo, `ifnotGodTech/team-ifnotGodtech`, separate from `WEB` (8 November 2026). It's currently public, not private as first planned. Revisit before real client data or backend details go in.
-- [x] **Address:** `team.ifnotgod.com`, on the same domain as the API so the login cookie works on both (8 November 2026).
+- [x] **Address:** `team.ifnotgod.com` (8 November 2026).
+- [x] **Sessions with the backend** (8 November 2026): the dashboard's server calls the API with its own app key. The API returns a token after the emailed code, which the dashboard keeps inside its own secure cookie. Log out revokes it. See `backend/CLAUDE.md`.
 - [x] **Hosting:** Vercel, like `WEB` (8 November 2026).
 - [x] **Staff sessions:** a secure cookie the browser's scripts can't read, ending after 1 hour without activity (8 November 2026).
 - [x] **Two-step verification:** required for every staff member from launch, with a code sent to their work email for now (8 November 2026). An authenticator app can replace it later.
@@ -109,7 +110,7 @@ Agreed on 8 November 2026, from the updated mock: staff can add services and gro
 
 ## Phase 7: Connect to the backend
 
-Needs `backend`. One vertical slice at a time: the backend writes and documents each API, then the matching functions in `src/lib/api` switch from the stand-in to it.
+Needs `backend`. One vertical slice at a time, following `backend/implementation_plan.md`: catalogue (backend phase 2), staff log in (3), clients (4), subscriptions (5 and 6), overview (7) and site content (8). The backend writes and documents each API, then the matching functions in `src/lib/api` switch from the stand-in to it.
 
 - [ ] Staff log in, sessions and emailed codes.
 - [ ] Clients.

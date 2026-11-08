@@ -15,7 +15,11 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${manrope.variable} ${publicSans.variable} h-full antialiased`}>
-      <body className="min-h-full">{children}</body>
+      {/* Browser extensions such as ColorZilla add attributes to <body> before React loads.
+          This ignores attribute differences on <body> only; mismatches inside the page still show. */}
+      <body className="min-h-full" suppressHydrationWarning>
+        {children}
+      </body>
     </html>
   );
 }
