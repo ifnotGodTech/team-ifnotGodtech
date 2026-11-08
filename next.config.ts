@@ -26,7 +26,9 @@ const nextConfig: NextConfig = {
           { key: "Content-Security-Policy", value: contentSecurityPolicy },
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "X-Frame-Options", value: "DENY" },
-          { key: "Referrer-Policy", value: "no-referrer" },
+          // "same-origin" sends nothing to other sites, but keeps the origin on our own form posts,
+          // which Next.js checks to block forged requests. "no-referrer" broke log in without JavaScript.
+          { key: "Referrer-Policy", value: "same-origin" },
           { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
           { key: "X-Robots-Tag", value: "noindex, nofollow" },
           // Every page shows clients' personal data or leads to it, so nothing is stored or shared.

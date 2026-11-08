@@ -4,7 +4,7 @@ Builds `dashboard`, the IFNOTGOD TECH team's internal tool, from the approved [d
 
 **Architecture:** a Next.js app with TypeScript, used only by our team. It stores no data: everything goes through the Django `backend` API, which owns data, login and the rules. The screens are built first, against a stand-in backend in `src/lib/api`, as `WEB` did for its account screens. When the backend starts, each screen is connected to the real API in vertical slices (phase 7), without changing the screens.
 
-**Status:** phase 1 is built and tested, not yet committed. Phase 2 is next. Tick items only after they're confirmed working.
+**Status:** phases 1 and 2 are built and tested, not yet committed. Phase 3 is next. Tick items only after they're confirmed working.
 
 ## Decided
 
@@ -56,13 +56,13 @@ Each screen talks only to functions in `src/lib/api`. Until phase 7, those funct
 
 The API it will need: staff log in, log out, and "who is signed in", with the session cookie ending after 1 hour without activity, lockouts after repeated failures, and two-step verification by email: sending a 6-digit code to the staff member's work email, checking it, letting it expire after 10 minutes, and limiting resends and wrong guesses.
 
-- [ ] Add the stand-in to `src/lib/api`: example staff, clients, subscriptions, payments and site content, following the rules in "Decided". It refuses to run on the live site.
-- [ ] Build **Log in** from the mock: work email and password, no sign-up, and a note to ask for access.
-- [ ] Add `src/lib/auth` with one helper that every page and action uses to get the signed-in staff member, or send them to log in. This is where roles will go later.
-- [ ] Add **two-step verification**: after the password, ask for the 6-digit code emailed to the staff member's work email, with "Send a new code". Say which address it went to and that it expires in 10 minutes.
-- [ ] Log out, and send expired sessions back to log in, returning to the page they were on. Warn a few minutes before the hour runs out, so unsaved changes aren't lost.
-- [ ] Show the backend's messages for wrong details and lockouts.
-- [ ] Tests: every page and action refuses signed-out visitors and staff who haven't finished two-step verification; a changed or expired session is refused; and browser tests for log in with an emailed code, a wrong or expired code, log out and the redirect back. No test sends a real email.
+- [x] Add the stand-in to `src/lib/api`, starting with staff log in. Clients, subscriptions, payments and site content are added in the phases that need them. It refuses to run on the live site.
+- [x] Build **Log in** from the mock: work email and password, no sign-up, and a note to ask for access.
+- [x] Add `src/lib/auth` with one helper that every page and action uses to get the signed-in staff member, or send them to log in. This is where roles will go later.
+- [x] Add **two-step verification**: after the password, ask for the 6-digit code emailed to the staff member's work email, with "Send a new code". Say which address it went to and that it expires in 10 minutes.
+- [x] Log out, and send expired sessions back to log in, returning to the page they were on. Warn a few minutes before the hour runs out, so unsaved changes aren't lost.
+- [x] Show the backend's messages for wrong details and lockouts.
+- [x] Tests: every page and action refuses signed-out visitors and staff who haven't finished two-step verification; a changed or expired session is refused; and browser tests for log in with an emailed code, a wrong or expired code, log out and the redirect back. No test sends a real email.
 
 ## Phase 3: Clients
 

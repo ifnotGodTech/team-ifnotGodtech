@@ -3,19 +3,27 @@ import { describe, expect, it, vi } from "vitest";
 
 const nav = vi.hoisted(() => ({ pathname: "/" }));
 vi.mock("next/navigation", () => ({ usePathname: () => nav.pathname }));
+vi.mock("@/lib/auth/actions", () => ({ logOutAction: vi.fn() }));
 
 import { isCurrent, Sidebar } from "./Sidebar";
 
 describe("Sidebar", () => {
   it("links to every area", () => {
-    render(<Sidebar />);
+    render(<Sidebar staffEmail="tunde@ifnotgod.com" />);
 
     expect(screen.getAllByRole("link").map((link) => link.getAttribute("href"))).toEqual(["/", "/", "/clients", "/subscriptions", "/content"]);
   });
 
+  it("shows who is signed in, with Log out", () => {
+    render(<Sidebar staffEmail="tunde@ifnotgod.com" />);
+
+    expect(screen.getByText("tunde@ifnotgod.com").parentElement).toHaveTextContent("Signed in as tunde@ifnotgod.com");
+    expect(screen.getByRole("button", { name: "Log out" })).toBeInTheDocument();
+  });
+
   it("marks the current area, including its inner pages", () => {
     nav.pathname = "/clients/c1";
-    render(<Sidebar />);
+    render(<Sidebar staffEmail="tunde@ifnotgod.com" />);
 
     expect(screen.getByRole("link", { name: "Clients" })).toHaveAttribute("aria-current", "page");
     expect(screen.getByRole("link", { name: "Overview" })).not.toHaveAttribute("aria-current");

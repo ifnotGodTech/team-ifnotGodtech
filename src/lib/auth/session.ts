@@ -1,13 +1,11 @@
 import type { StaffMember } from "@/types/staff";
+import { IDLE_LIMIT_MS } from "./constants";
 import { signJson, verifyJson } from "./signing";
 
 // A staff session ends after 1 hour without activity. Each request through the proxy
 // restarts the hour. When the real backend is connected, it owns the session instead.
 
 export const SESSION_COOKIE = "ifng_staff";
-export const IDLE_LIMIT_MS = 60 * 60 * 1000;
-/** Shown before the session ends, so unsaved changes aren't lost. */
-export const WARNING_BEFORE_MS = 5 * 60 * 1000;
 
 type SessionPayload = { staff: StaffMember; lastActive: number };
 

@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { logOutAction } from "@/lib/auth/actions";
 import { cn } from "@/shared/cn";
 
 export const NAV_ITEMS = [
@@ -16,7 +17,7 @@ export function isCurrent(pathname: string, href: string): boolean {
   return href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function Sidebar() {
+export function Sidebar({ staffEmail }: { staffEmail: string }) {
   const pathname = usePathname();
 
   // Full height only beside the content (from 800px wide). Stacked on a phone, it stays compact.
@@ -44,7 +45,16 @@ export function Sidebar() {
           );
         })}
       </nav>
-      {/* Phase 2 adds the signed-in email and Log out here. */}
+      <div className="mt-auto flex flex-col gap-1.5 border-t border-ink-line px-2 pt-3.5 text-[0.88rem]">
+        <span className="text-on-ink-dim">
+          Signed in as <span className="block text-paper [overflow-wrap:anywhere]">{staffEmail}</span>
+        </span>
+        <form action={logOutAction}>
+          <button type="submit" className="cursor-pointer font-semibold text-orange-text underline">
+            Log out
+          </button>
+        </form>
+      </div>
     </aside>
   );
 }

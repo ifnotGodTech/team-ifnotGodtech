@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { logIn } from "./helpers";
 
 const PAGES = [
   ["/", "Overview"],
@@ -7,9 +8,10 @@ const PAGES = [
   ["/content", "Site content"],
 ] as const;
 
-test("every page is kept out of search engines and caches, and can't be framed", async ({ request }) => {
-  for (const [path] of PAGES) {
-    const headers = (await request.get(path)).headers();
+test("every page is kept out of search engines and caches, and can't be framed", async ({ page }) => {
+  await logIn(page);
+  for (const [path] of [...PAGES, ["/login"]]) {
+    const headers = (await page.request.get(path)).headers();
     expect(headers["x-robots-tag"], path).toBe("noindex, nofollow");
     expect(headers["cache-control"], path).toContain("no-store");
     expect(headers["x-frame-options"], path).toBe("DENY");
@@ -22,7 +24,7 @@ test("robots.txt disallows everything", async ({ request }) => {
 });
 
 test("the sidebar reaches every area and marks where you are", async ({ page }) => {
-  await page.goto("/");
+  await logIn(page);
 
   for (const [path, name] of PAGES) {
     await page.getByRole("navigation", { name: "Dashboard" }).getByRole("link", { name }).click();
@@ -39,12 +41,14 @@ test("pages load without errors or blocked resources", async ({ page }) => {
     if (message.type() === "error") problems.push(message.text());
   });
 
+  await logIn(page);
   for (const [path] of PAGES) await page.goto(path, { waitUntil: "networkidle" });
 
   expect(problems).toEqual([]);
 });
 
 test("focus is visible on the dark sidebar", async ({ page }) => {
+  await logIn(page);
   await page.goto("/");
   await page.keyboard.press("Tab");
   await page.keyboard.press("Tab");
@@ -60,14 +64,14 @@ for (const [label, width] of [
 ] as const) {
   test(`the layout fits at ${label} width`, async ({ page }) => {
     await page.setViewportSize({ width, height: 800 });
-    await page.goto("/clients");
+    await logIn(page, "/clients");
 
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
     const sidebar = await page.locator("aside").boundingBox();
     const main = await page.locator("main").boundingBox();
     if (width < 800) {
       expect(main!.y).toBeGreaterThanOrEqual(sidebar!.y + sidebar!.height - 1);
-      expect(sidebar!.height, "a stacked sidebar stays compact").toBeLessThan(360);
+      expect(sidebar!.height, "a stacked sidebar stays compact").toBeLessThan(440);
     }
     else {
       expect(main!.x).toBeGreaterThanOrEqual(sidebar!.x + sidebar!.width - 1);
