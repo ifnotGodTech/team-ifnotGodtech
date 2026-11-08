@@ -5,11 +5,11 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { getBackend } from "@/lib/api";
 import type { ApiResult } from "@/lib/api";
-import { MAX_CODE_ATTEMPTS } from "./constants";
+import { IDLE_LIMIT_MS, MAX_CODE_ATTEMPTS } from "./constants";
 import { INITIAL_AUTH_STATE, type AuthFormState } from "./formState";
-import { requireStaff } from "./index";
+import { readStaffSession } from "./index";
 import { safeNextPath } from "./paths";
-import { encodeSession, SESSION_COOKIE, sessionCookieOptions } from "./session";
+import { encodeLoggedOut, encodeSession, LOGGED_OUT_COOKIE, SESSION_COOKIE, sessionCookieOptions } from "./session";
 import { cookieSecret, signJson, verifyJson } from "./signing";
 
 // Form actions can be called directly with a POST, so each one checks everything itself.
@@ -81,6 +81,7 @@ export async function verifyCodeAction(_: AuthFormState, form: FormData): Promis
 
   const jar = await cookies();
   jar.delete(PENDING_COOKIE);
+  jar.delete(LOGGED_OUT_COOKIE);
   jar.set(SESSION_COOKIE, encodeSession(result.data, cookieSecret()), sessionCookieOptions);
   redirect(pending.next);
 }
@@ -100,12 +101,15 @@ export async function logOutAction(): Promise<void> {
   const jar = await cookies();
   jar.delete(SESSION_COOKIE);
   jar.delete(PENDING_COOKIE);
+  jar.set(LOGGED_OUT_COOKIE, encodeLoggedOut(cookieSecret()), sessionCookieOptions);
   redirect("/login?reason=signed-out");
 }
 
 /** "Stay signed in": restarts the hour and returns when the session now ends. */
 export async function keepAliveAction(): Promise<number> {
-  const { staff } = await requireStaff();
-  (await cookies()).set(SESSION_COOKIE, encodeSession(staff, cookieSecret()), sessionCookieOptions);
-  return Date.now() + 60 * 60 * 1000;
+  const session = await readStaffSession();
+  if (session.status !== "active") redirect(session.status === "expired" ? "/login?reason=expired" : "/login");
+  const now = Date.now();
+  (await cookies()).set(SESSION_COOKIE, encodeSession(session.staff, cookieSecret(), now, session.startedAt), sessionCookieOptions);
+  return now + IDLE_LIMIT_MS;
 }

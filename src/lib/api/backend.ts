@@ -1,4 +1,4 @@
-import type { Catalogue, PlanId } from "@/types/catalogue";
+import type { Catalogue, GroupDraft, Plan, PlanId, PlanUpdate, Service, ServiceDraft, ServiceGroup, SiteText } from "@/types/catalogue";
 import type { ClientDetail, ClientPage, ClientSearch } from "@/types/client";
 import type { Overview } from "@/types/overview";
 import type { ClientSubscription, SubscriptionFilter, SubscriptionList } from "@/types/subscription";
@@ -23,6 +23,18 @@ export type DashboardBackend = {
 
   /** Plans and services, as the website shows them. */
   getCatalogue(): Promise<ApiResult<Catalogue>>;
+
+  // Site content. Each save tells WEB to refresh its cached pages, and records who made it.
+  /** At most one plan is recommended, so recommending one stops recommending the others. */
+  savePlan(planId: PlanId, update: PlanUpdate, staffEmail: string): Promise<ApiResult<Plan>>;
+  /** Adds a service when its id is null, otherwise updates it. */
+  saveService(draft: ServiceDraft, staffEmail: string): Promise<ApiResult<Service>>;
+  /** Hidden services stay running for clients who already have them. */
+  setServiceShown(serviceId: string, shown: boolean, staffEmail: string): Promise<ApiResult<Service>>;
+  /** Adds a group when its id is null, otherwise renames it. */
+  saveGroup(draft: GroupDraft, staffEmail: string): Promise<ApiResult<ServiceGroup>>;
+  getSiteText(): Promise<ApiResult<SiteText>>;
+  saveSiteText(text: SiteText, staffEmail: string): Promise<ApiResult<SiteText>>;
   /** Soonest renewal or end first, with a count for each filter. */
   listSubscriptions(filter: SubscriptionFilter): Promise<ApiResult<SubscriptionList>>;
   /** Null for a client without a plan. */

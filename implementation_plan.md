@@ -4,7 +4,7 @@ Builds `dashboard`, the IFNOTGOD TECH team's internal tool, from the approved [d
 
 **Architecture:** a Next.js app with TypeScript, used only by our team. It stores no data: everything goes through the Django `backend` API, which owns data, login and the rules. The screens are built first, against a stand-in backend in `src/lib/api`, as `WEB` did for its account screens. When the backend starts, each screen is connected to the real API in vertical slices (phase 7), without changing the screens.
 
-**Status:** phases 1 to 4 are pushed. Phase 5 is built and tested on `feat/overview`, not yet committed. Phase 6 is next. Tick items only after they're confirmed working.
+**Status:** phases 1 to 5 are pushed. Phase 6 is built and tested on `feat/site-content`, not yet committed. Phase 7 needs the backend. Tick items only after they're confirmed working.
 
 ## Decided
 
@@ -95,13 +95,17 @@ The API it will need: counts of active subscriptions and monthly income, renewal
 
 ## Phase 6: Site content
 
-The API it will need: reading and saving plans, prices, services and site text, and telling `WEB` to refresh its cached pages after a save.
+The API it will need: reading and saving plans, services, service groups and site text, and telling `WEB` to refresh its cached pages after a save. Services, groups and plan lines are records staff can add and edit, not fixed fields.
 
-- [ ] Build **Plans and prices** from the mock: price, changes a month, website included and "recommended". Before saving a price, say that new subscribers pay it straight away and existing subscribers from their next renewal.
-- [ ] Build **Services**: the "Shown on the site" switch. Hiding one asks first, saying it keeps running for clients who already have it until we let them know and move them on.
-- [ ] Build **Site text**: the home page headline, introduction and closing call to action, with more added as `WEB` reads them from the API.
-- [ ] Say when saved changes will appear on the website.
-- [ ] Tests: validation of prices and limits, each confirmation, and a saved change appearing on a `WEB` preview.
+Agreed on 8 November 2026, from the updated mock: staff can add services and groups and change what each plan lists without a developer. Adding a whole new plan comes later, because it needs its own prices and payment setup.
+
+- [x] Build **Plans and prices** from the mock: price, changes a month, how many services each plan includes from each group, the plan's other lines (add, reorder, remove), and "recommended" (one plan at a time). Before saving a price, say that new subscribers pay it straight away and existing subscribers from their next renewal. Custom stays quoted after the audit.
+- [x] Build **Services**: add and edit a service's name, the problem it solves, its group, and tick boxes for which plans include it. Warn, without blocking, when a lower plan includes a service but a higher plan doesn't. When a plan is unticked, say that clients on it who already have the service keep it until we let them know and move them on.
+- [x] Keep **showing and hiding a service** on the website. Hiding one asks first, saying it keeps running for clients who already have it until we let them know and move them on.
+- [x] Build **Service groups**: rename groups and add new ones, with the words used for one and several ("1 website or app"). A group appears on the website once a plan includes one of its services.
+- [x] Build **Site text**: the home page headline, introduction and closing call to action, with more added as `WEB` reads them from the API.
+- [x] Say when saved changes will appear on the website.
+- [x] Tests: validation of prices, limits and text, each warning and confirmation, and adding a service and a group. A saved change appearing on a `WEB` preview is checked in phase 7, when `WEB` reads from the API.
 
 ## Phase 7: Connect to the backend
 
@@ -111,7 +115,7 @@ Needs `backend`. One vertical slice at a time: the backend writes and documents 
 - [ ] Clients.
 - [ ] Subscriptions, including actions on a client's behalf.
 - [ ] Overview figures.
-- [ ] Site content. With `WEB`: switch its `src/lib/catalogue` from the content files to the API, with cached pages that refresh after a save and keep the last good version if the API is down.
+- [ ] Site content. With `WEB`: switch its `src/lib/catalogue` from the content files to the API, with cached pages that refresh after a save and keep the last good version if the API is down. `WEB` then lists each plan's lines and services from the data, with services naming the plans that include them instead of a lowest plan, and shows new service groups.
 - [ ] Remove the stand-in, and the "not found on the live site" guard.
 - [ ] Tests: each function against the real API's responses, including its errors.
 

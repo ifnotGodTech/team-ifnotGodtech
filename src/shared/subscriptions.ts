@@ -27,10 +27,9 @@ export const periodLabel = (period: BillingPeriod) => PERIODS[period].short;
 /** "paid monthly", "paid 6 months upfront". */
 export const paidLabel = (period: BillingPeriod) => PERIODS[period].paid;
 
-const PLAN_ORDER: readonly PlanId[] = ["starter", "growth", "pro", "custom"];
-
+/** Whether a plan includes a service. Custom plans can include any service, as agreed. */
 export function isIncludedInPlan(service: Service, planId: PlanId): boolean {
-  return PLAN_ORDER.indexOf(planId) >= PLAN_ORDER.indexOf(service.includedFrom);
+  return planId === "custom" || service.plans.includes(planId);
 }
 
 /** "3 everyday automations", "1 AI agent", or the group's name when agreed per client. */
@@ -48,15 +47,15 @@ export function servicesIncluded(plan: Plan): number | null {
 export type ServiceChoice = { group: ServiceGroup; allowance: Allowance; label: string; services: Service[] };
 
 /**
- * What a client on this plan can choose from, by group. A service taken off the website
- * is still listed for a client who already has it, because it keeps running for them.
+ * What a client on this plan can choose from, by group. A service taken off the website, or
+ * off this plan, is still listed for a client who already has it, because it keeps running for them.
  */
 export function serviceChoices(plan: Plan, catalogue: Catalogue, current: string[] = []): ServiceChoice[] {
   return catalogue.groups.flatMap((group) => {
-    const allowance = plan.allowances[group.id];
+    const allowance = plan.allowances[group.id] ?? 0;
     if (allowance === 0) return [];
     const services = catalogue.services.filter(
-      (service) => service.group === group.id && isIncludedInPlan(service, plan.id) && (service.available || current.includes(service.id))
+      (service) => service.group === group.id && (current.includes(service.id) || (service.available && isIncludedInPlan(service, plan.id)))
     );
     return services.length ? [{ group, allowance, label: allowanceLabel(group, allowance), services }] : [];
   });

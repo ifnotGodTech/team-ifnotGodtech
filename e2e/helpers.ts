@@ -11,5 +11,6 @@ export async function logIn(page: Page, next = "/") {
   await expect(page.getByRole("heading", { name: "Check your email" })).toBeVisible();
   await page.getByLabel("Code", { exact: true }).fill(STAND_IN_CODE);
   await page.getByRole("button", { name: "Log in" }).click();
-  await expect(page).toHaveURL(new RegExp(`${next === "/" ? "/" : next}$`));
+  const escaped = next.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  await expect(page).toHaveURL(new RegExp(`${escaped}$`));
 }

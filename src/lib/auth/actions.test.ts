@@ -98,6 +98,8 @@ describe("log in actions", () => {
 
     expect(await redirectedTo(logOutAction())).toBe("/login?reason=signed-out");
     expect(mocks.values.has(SESSION_COOKIE)).toBe(false);
+    // A session cookie brought back by a response still loading at the time is refused.
+    expect(mocks.values.has("ifng_staff_out")).toBe(true);
   });
 
   it("keeps a signed-in session going, and refuses anyone signed out", async () => {

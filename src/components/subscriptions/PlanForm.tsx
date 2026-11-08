@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { Button, ButtonLink } from "@/components/ui/Button";
-import type { ChoiceFormState } from "@/lib/actions/formState";
-import { useKeptFormAction } from "./useKeptFormAction";
+import { useKeptFormAction } from "@/components/forms/useKeptFormAction";
+import { INITIAL_CHOICE_STATE, type ChoiceFormState } from "@/lib/actions/formState";
 import { formatNaira } from "@/shared/format";
 import type { Plan, PlanId } from "@/types/catalogue";
 
@@ -18,7 +18,7 @@ type PlanFormProps = {
 };
 
 export function PlanForm({ action, clientId, plans, currentPlanId, pendingPlanId, renewalDate }: PlanFormProps) {
-  const { state, formAction, pending, onSubmit } = useKeptFormAction(action);
+  const { state, formAction, pending, onSubmit } = useKeptFormAction(action, INITIAL_CHOICE_STATE);
   const [selected, setSelected] = useState<string>(pendingPlanId ?? currentPlanId);
   const chosen = plans.find((plan) => plan.id === selected);
 

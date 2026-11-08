@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import type { Plan, PlanId, Service, ServiceGroup, SiteText } from "@/types/catalogue";
 import type { ClientHistoryEntry } from "@/types/client";
 import type { ClientSubscription } from "@/types/subscription";
 import { cookieSecret, signJson, verifyJson } from "@/lib/auth/signing";
@@ -15,40 +16,61 @@ export type StubChanges = {
   history: Record<string, ClientHistoryEntry[]>;
 };
 
+/** Site content changes: only what changed, by id, to keep the cookie small. */
+export type ContentChanges = {
+  plans: Partial<Record<PlanId, Plan>>;
+  services: Record<string, Service>;
+  groups: Record<string, ServiceGroup>;
+  siteText: SiteText | null;
+};
+
 export type StubStore = {
   read(): Promise<StubChanges>;
   write(changes: StubChanges): Promise<void>;
+  readContent(): Promise<ContentChanges>;
+  writeContent(changes: ContentChanges): Promise<void>;
 };
 
 const COOKIE = "ifng_stub_changes";
+const CONTENT_COOKIE = "ifng_stub_content";
 const MAX_AGE_SECONDS = 24 * 60 * 60;
 
 const empty = (): StubChanges => ({ subscriptions: {}, history: {} });
+const emptyContent = (): ContentChanges => ({ plans: {}, services: {}, groups: {}, siteText: null });
+
+async function readCookie<T>(name: string): Promise<T | null> {
+  const value = (await cookies()).get(name)?.value;
+  return value ? verifyJson<T>(value, cookieSecret()) : null;
+}
+
+async function writeCookie(name: string, data: unknown) {
+  (await cookies()).set(name, signJson(data, cookieSecret()), {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: MAX_AGE_SECONDS,
+  });
+}
 
 export const cookieStubStore: StubStore = {
-  async read() {
-    const value = (await cookies()).get(COOKIE)?.value;
-    return (value && verifyJson<StubChanges>(value, cookieSecret())) || empty();
-  },
-  async write(changes) {
-    (await cookies()).set(COOKIE, signJson(changes, cookieSecret()), {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/",
-      maxAge: MAX_AGE_SECONDS,
-    });
-  },
+  read: async () => (await readCookie<StubChanges>(COOKIE)) ?? empty(),
+  write: (changes) => writeCookie(COOKIE, changes),
+  readContent: async () => (await readCookie<ContentChanges>(CONTENT_COOKIE)) ?? emptyContent(),
+  writeContent: (changes) => writeCookie(CONTENT_COOKIE, changes),
 };
 
 export function memoryStubStore(): StubStore {
   let changes = empty();
+  let content = emptyContent();
   return {
-    async read() {
-      return structuredClone(changes);
-    },
-    async write(next) {
+    read: async () => structuredClone(changes),
+    write: async (next) => {
       changes = structuredClone(next);
+    },
+    readContent: async () => structuredClone(content),
+    writeContent: async (next) => {
+      content = structuredClone(next);
     },
   };
 }

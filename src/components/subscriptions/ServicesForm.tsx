@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { Button, ButtonLink } from "@/components/ui/Button";
-import type { ChoiceFormState } from "@/lib/actions/formState";
-import { useKeptFormAction } from "./useKeptFormAction";
+import { useKeptFormAction } from "@/components/forms/useKeptFormAction";
+import { INITIAL_CHOICE_STATE, type ChoiceFormState } from "@/lib/actions/formState";
 import { checkServiceSelection, type ServiceChoice } from "@/shared/subscriptions";
 
 type ServicesFormProps = {
@@ -28,7 +28,7 @@ function changesNote(choices: ServiceChoice[], current: string[], selected: stri
 }
 
 export function ServicesForm({ action, clientId, choices, current, changesLeft }: ServicesFormProps) {
-  const { state, formAction, pending, onSubmit } = useKeptFormAction(action);
+  const { state, formAction, pending, onSubmit } = useKeptFormAction(action, INITIAL_CHOICE_STATE);
   // Controlled, so what was ticked stays ticked if a save fails.
   const [selected, setSelected] = useState(current);
 

@@ -89,13 +89,19 @@ test("the code page sends people without a log in in progress back to log in", a
   await expect(page).toHaveURL(/\/login$/);
 });
 
-test("logging out ends the session", async ({ page }) => {
+test("logging out ends the session, even if an old session cookie comes back", async ({ page, context }) => {
   await logIn(page);
+  const before = (await context.cookies()).find((cookie) => cookie.name === "ifng_staff")!;
 
   await page.getByRole("button", { name: "Log out" }).click();
   await expect(page).toHaveURL(/\/login\?reason=signed-out$/);
   await expect(page.getByRole("status")).toHaveText("You've logged out.");
 
+  await page.goto("/clients");
+  await expect(page).toHaveURL(/\/login\?next=%2Fclients$/);
+
+  // As if a page that was loading when they logged out had sent back a refreshed session.
+  await context.addCookies([before]);
   await page.goto("/clients");
   await expect(page).toHaveURL(/\/login\?next=%2Fclients$/);
 });
@@ -106,6 +112,8 @@ test("the session cookie can't be read by scripts, and a forged one is refused",
   expect(cookie).toMatchObject({ httpOnly: true, sameSite: "Lax" });
   expect(await page.evaluate(() => document.cookie)).not.toContain("ifng_staff");
 
+  // Leave the page first, so no request still loading can bring back a real session cookie.
+  await page.goto("about:blank");
   await context.clearCookies();
   await context.addCookies([{ name: "ifng_staff", value: "forged.value", url: "http://localhost:3200" }]);
   await page.goto("/clients");

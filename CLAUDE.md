@@ -30,7 +30,7 @@ The dashboard stores no data of its own. Everything it shows or changes goes thr
 ## Folder Structure
 - `src/app/(auth)` (log in and log out, with no dashboard navigation)
 - `src/app/(dashboard)` (every signed-in page, behind one layout with the navigation; one folder per area: `users`, `subscriptions`, `content`, and later `leads`)
-- `src/components` (screens and their parts, grouped by area, plus shared `ui` primitives: buttons, inputs, tables, badges, confirm dialogs)
+- `src/components` (screens and their parts, grouped by area, plus shared `ui` primitives: buttons, inputs, tables, badges, confirm dialogs, and `forms` helpers that keep what was typed when a save fails)
 - `src/lib/api` (the only route to the backend: one client, typed responses, failures turned into normalized errors)
 - `src/lib/auth` (the staff session, log in actions, and the one place where access is checked)
 - `src/lib/actions` (server actions that change data, each checking the session itself)

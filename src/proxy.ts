@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { loginPath, safeNextPath } from "@/lib/auth/paths";
-import { checkSession, encodeSession, SESSION_COOKIE, sessionCookieOptions } from "@/lib/auth/session";
+import { checkSession, encodeSession, LOGGED_OUT_COOKIE, loggedOutAt, SESSION_COOKIE, sessionCookieOptions } from "@/lib/auth/session";
 import { cookieSecret } from "@/lib/auth/signing";
 
 // Runs before every page. It restarts the 1-hour session on each request, and sends
@@ -14,11 +14,12 @@ export function proxy(request: NextRequest) {
   if (pathname.startsWith("/login")) return NextResponse.next();
 
   const secret = cookieSecret();
-  const session = checkSession(request.cookies.get(SESSION_COOKIE)?.value, secret);
+  const loggedOut = loggedOutAt(request.cookies.get(LOGGED_OUT_COOKIE)?.value, secret);
+  const session = checkSession(request.cookies.get(SESSION_COOKIE)?.value, secret, Date.now(), loggedOut);
 
   if (session.status === "active") {
     const response = NextResponse.next();
-    response.cookies.set(SESSION_COOKIE, encodeSession(session.staff, secret), sessionCookieOptions);
+    response.cookies.set(SESSION_COOKIE, encodeSession(session.staff, secret, Date.now(), session.startedAt), sessionCookieOptions);
     return response;
   }
 
