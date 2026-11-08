@@ -1,6 +1,7 @@
 import type { z } from "zod";
-import { API_TIMEOUT_MS, apiBaseUrl } from "./config";
+import { API_PREFIX, API_TIMEOUT_MS, apiAppKey, apiBaseUrl } from "./config";
 import { apiError, codeForStatus, type ApiResult } from "./errors";
+import { visitorIp } from "./visitor";
 
 // The raw HTTP client. Only the functions in src/lib/api use it; screens call those instead.
 
@@ -9,7 +10,7 @@ type RequestOptions<T> = {
   body?: unknown;
   /** Checks the response's shape, so a changed or broken backend can't put bad data on screen. */
   schema: z.ZodType<T>;
-  /** Extra headers, such as the staff session cookie from phase 2. */
+  /** Extra headers, such as the staff member's token. */
   headers?: Record<string, string>;
 };
 
@@ -29,16 +30,24 @@ function readErrorBody(body: unknown): { message?: string; fieldErrors?: Record<
 
 export async function apiRequest<T>(path: string, { method = "GET", body, schema, headers = {} }: RequestOptions<T>): Promise<ApiResult<T>> {
   const base = apiBaseUrl();
-  if (!base) {
-    console.error("[api] DASHBOARD_API_URL is not set");
+  const appKey = apiAppKey();
+  if (!base || !appKey) {
+    console.error(`[api] ${base ? "DASHBOARD_APP_KEY" : "DASHBOARD_API_URL"} is not set`);
     return { ok: false, error: apiError("UNAVAILABLE") };
   }
+  const visitor = await visitorIp();
 
   let response: Response;
   try {
-    response = await fetch(`${base}${path}`, {
+    response = await fetch(`${base}${API_PREFIX}${path}`, {
       method,
-      headers: { accept: "application/json", ...(body === undefined ? {} : { "content-type": "application/json" }), ...headers },
+      headers: {
+        accept: "application/json",
+        "x-app-key": appKey,
+        ...(visitor ? { "x-visitor-ip": visitor } : {}),
+        ...(body === undefined ? {} : { "content-type": "application/json" }),
+        ...headers,
+      },
       body: body === undefined ? undefined : JSON.stringify(body),
       cache: "no-store",
       signal: AbortSignal.timeout(API_TIMEOUT_MS),

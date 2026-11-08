@@ -2,6 +2,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 import { apiRequest } from "./http";
 
+const requestHeaders = vi.hoisted(() => ({ value: new Headers() }));
+vi.mock("next/headers", () => ({ headers: async () => requestHeaders.value }));
+
 const schema = z.object({ name: z.string() });
 const fetchMock = vi.fn();
 const json = (status: number, body: unknown) => new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
@@ -9,6 +12,8 @@ const json = (status: number, body: unknown) => new Response(JSON.stringify(body
 describe("apiRequest", () => {
   beforeEach(() => {
     vi.stubEnv("DASHBOARD_API_URL", "https://api.example.com/");
+    vi.stubEnv("DASHBOARD_APP_KEY", "dashboard-key");
+    requestHeaders.value = new Headers();
     vi.stubGlobal("fetch", fetchMock);
     vi.spyOn(console, "error").mockImplementation(() => {});
     fetchMock.mockReset();
@@ -25,9 +30,33 @@ describe("apiRequest", () => {
 
     expect(await apiRequest("/clients/1", { schema })).toEqual({ ok: true, data: { name: "Ada" } });
     const [url, options] = fetchMock.mock.calls[0];
-    expect(url).toBe("https://api.example.com/clients/1");
+    expect(url).toBe("https://api.example.com/api/v1/clients/1");
     expect(options).toMatchObject({ method: "GET", cache: "no-store" });
     expect(options.signal).toBeInstanceOf(AbortSignal);
+  });
+
+  it("sends the dashboard's app key and the visitor's own address", async () => {
+    requestHeaders.value = new Headers({ "x-forwarded-for": "102.89.1.10, 76.76.21.1" });
+    fetchMock.mockResolvedValueOnce(json(200, { name: "Ada" }));
+
+    await apiRequest("/clients/1", { schema });
+
+    expect(fetchMock.mock.calls[0][1].headers).toMatchObject({ "x-app-key": "dashboard-key", "x-visitor-ip": "102.89.1.10" });
+  });
+
+  it("leaves out the visitor's address when there isn't one", async () => {
+    fetchMock.mockResolvedValueOnce(json(200, { name: "Ada" }));
+
+    await apiRequest("/clients/1", { schema });
+
+    expect(fetchMock.mock.calls[0][1].headers).not.toHaveProperty("x-visitor-ip");
+  });
+
+  it("refuses to call the backend without the app key", async () => {
+    vi.stubEnv("DASHBOARD_APP_KEY", "");
+
+    expect(await apiRequest("/clients/1", { schema })).toMatchObject({ ok: false, error: { code: "UNAVAILABLE" } });
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("sends a JSON body and extra headers", async () => {
