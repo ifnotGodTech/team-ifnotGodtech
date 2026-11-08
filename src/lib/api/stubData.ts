@@ -24,9 +24,7 @@ function historyFor(client: Seed): ClientDetail["history"] {
   const entries: ClientDetail["history"] = [
     { id: `${client.id}-joined`, at: `${client.joinedOn}T09:00:00Z`, text: "Created an account", by: "the client" },
   ];
-  if (client.planName) {
-    entries.unshift({ id: `${client.id}-subscribed`, at: `${client.joinedOn}T09:20:00Z`, text: `Subscribed to ${client.planName}, monthly`, by: "the client" });
-  }
+  // The stand-in adds "Subscribed" from the first payment, so the two always agree.
   if (client.planStatus === "cancelled") {
     entries.unshift({ id: `${client.id}-cancelled`, at: "2026-11-07T15:40:00Z", text: "Cancelled the subscription", by: "the client" });
   }

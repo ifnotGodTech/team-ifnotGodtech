@@ -9,6 +9,9 @@ const notFound = vi.hoisted(() =>
 vi.mock("next/navigation", () => ({ notFound, redirect: vi.fn() }));
 vi.mock("@/lib/auth", () => ({ requireStaff: async () => ({ staff: { email: "tunde@ifnotgod.com" }, expiresAt: 0 }) }));
 vi.mock("@/lib/actions/clients", () => ({ sendPasswordResetAction: vi.fn() }));
+vi.mock("@/lib/actions/subscriptions", () => ({ cancelSubscriptionAction: vi.fn(), keepSubscriptionAction: vi.fn() }));
+// The stand-in keeps changes in a cookie; these tests start with none.
+vi.mock("next/headers", () => ({ cookies: async () => ({ get: () => undefined }) }));
 
 import ClientPage from "./[id]/page";
 import ClientsPage from "./page";

@@ -4,7 +4,7 @@ Builds `dashboard`, the IFNOTGOD TECH team's internal tool, from the approved [d
 
 **Architecture:** a Next.js app with TypeScript, used only by our team. It stores no data: everything goes through the Django `backend` API, which owns data, login and the rules. The screens are built first, against a stand-in backend in `src/lib/api`, as `WEB` did for its account screens. When the backend starts, each screen is connected to the real API in vertical slices (phase 7), without changing the screens.
 
-**Status:** phases 1 and 2 are pushed. Phase 3 is built and tested on `feat/clients`, not yet committed. Phase 4 is next. Tick items only after they're confirmed working.
+**Status:** phases 1 to 3 are pushed. Phase 4 is built and tested on `feat/subscriptions`, not yet committed. Phase 5 is next. Tick items only after they're confirmed working.
 
 ## Decided
 
@@ -78,13 +78,13 @@ The API it will need: search clients, and one client's details and account histo
 
 The API it will need: list and filter subscriptions; one client's subscription, services and payments; and cancelling, keeping a cancelled plan, changing services and changing plan on a client's behalf, under the same rules as clients.
 
-- [ ] Build **Subscriptions** from the mock, with the filters All, Active, Renewing in 7 days, and Cancelled, still running.
-- [ ] Add the subscription panel to **Client details**: plan, status, renewal date and reminder, changes left this month, setup fee, services, a waiting plan change, and payments.
-- [ ] **Cancel on a client's behalf:** confirm first, saying what happens, then show the cancelled state. Add "Keep the plan" to undo it while the paid period is running.
-- [ ] **Change services on a client's behalf**, within the plan's limits, showing the changes left.
-- [ ] **Change plan on a client's behalf**, starting at the next renewal.
-- [ ] Show payments from Flutterwave through the backend, never card details.
-- [ ] Tests: each filter, each action's confirmation and result, refusals explained by the backend, and keeping what was typed when a save fails.
+- [x] Build **Subscriptions** from the mock, with the filters All, Active, Renewing in 7 days, and Cancelled, still running.
+- [x] Add the subscription panel to **Client details**: plan, status, renewal date and reminder, changes left this month, setup fee, services, a waiting plan change, and payments.
+- [x] **Cancel on a client's behalf:** confirm first, saying what happens, then show the cancelled state. Add "Keep the plan" to undo it while the paid period is running.
+- [x] **Change services on a client's behalf**, within the plan's limits, showing the changes left.
+- [x] **Change plan on a client's behalf**, starting at the next renewal.
+- [x] Show payments from Flutterwave through the backend, never card details.
+- [x] Tests: each filter, each action's confirmation and result, refusals explained by the backend, and keeping what was typed when a save fails.
 
 ## Phase 5: Overview
 

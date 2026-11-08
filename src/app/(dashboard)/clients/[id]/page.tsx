@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { PlanStatusBadge } from "@/components/clients/PlanStatusBadge";
+import { ClientNotice } from "@/components/clients/ClientNotice";
+import { PaymentsTable } from "@/components/subscriptions/PaymentsTable";
+import { SubscriptionPanel } from "@/components/subscriptions/SubscriptionPanel";
 import { ConfirmPanel } from "@/components/ui/ConfirmPanel";
 import { ErrorState } from "@/components/ui/States";
 import { getBackend } from "@/lib/api";
@@ -13,50 +15,69 @@ export const metadata: Metadata = { title: "Client" };
 
 const CARD = "flex flex-col gap-3 rounded-[10px] border border-line bg-card p-6";
 const SIGN_IN = { password: "Email and password", google: "Google" } as const;
-const RESET_NOTICES = {
-  sent: { text: "Password reset email sent.", className: "border-success/40 bg-success-bg text-success" },
-  failed: { text: "We couldn't send the password reset email. Please try again.", className: "border-maroon bg-maroon-tint text-maroon" },
-} as const;
+const BACK = (
+  <Link href="/clients" className="w-fit font-semibold text-maroon underline">
+    Back to clients
+  </Link>
+);
 
 export default async function ClientPage({ params, searchParams }: PageProps<"/clients/[id]">) {
   await requireStaff();
-  const [{ id }, { reset }] = await Promise.all([params, searchParams]);
-  const result = await getBackend().getClient(id);
+  const [{ id }, query] = await Promise.all([params, searchParams]);
+  const backend = getBackend();
+  const [result, subscription, catalogue] = await Promise.all([backend.getClient(id), backend.getSubscription(id), backend.getCatalogue()]);
 
   if (!result.ok && result.error.code === "NOT_FOUND") notFound();
-  if (!result.ok) return <ErrorState message={result.error.message} action={<Link href="/clients" className="font-semibold text-maroon underline">Back to clients</Link>} />;
-
+  if (!result.ok) return <ErrorState message={result.error.message} action={BACK} />;
   const client = result.data;
-  const notice = reset === "sent" || reset === "failed" ? RESET_NOTICES[reset] : null;
 
   return (
     <>
-      <Link href="/clients" className="w-fit font-semibold text-maroon underline">
-        Back to clients
-      </Link>
+      {BACK}
       <div className="flex flex-col gap-1">
         <h1 className="text-[1.9rem] font-extrabold">{client.fullName}</h1>
         <p className="text-text-dim">{[client.businessName, client.email].filter(Boolean).join(" · ")}</p>
       </div>
 
-      {notice && (
-        <p role="status" className={`rounded-md border px-4 py-3 font-semibold ${notice.className}`}>
-          {notice.text}
-        </p>
+      <ClientNotice query={query} />
+
+      {!subscription.ok || !catalogue.ok ? (
+        <ErrorState
+          message={(!subscription.ok ? subscription.error : !catalogue.ok ? catalogue.error : null)?.message ?? ""}
+          action={<Link href={`/clients/${client.id}`} className="font-semibold text-maroon underline">Try again</Link>}
+        />
+      ) : subscription.data ? (
+        <SubscriptionPanel clientId={client.id} clientName={client.fullName} subscription={subscription.data} catalogue={catalogue.data} />
+      ) : (
+        <section aria-labelledby="plan-heading" className={CARD}>
+          <h2 id="plan-heading" className="text-[1.25rem] font-extrabold">
+            No plan
+          </h2>
+          <p className="text-text-dim">This client hasn&apos;t subscribed. They choose a plan from their account on the website.</p>
+        </section>
       )}
 
-      <section aria-labelledby="plan-heading" className={CARD}>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 id="plan-heading" className="text-[1.25rem] font-extrabold">
-            {client.planName ? `${client.planName} plan` : "No plan"}
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(min(400px,100%),1fr))] items-start gap-5">
+        {subscription.ok && subscription.data && <PaymentsTable payments={subscription.data.payments} />}
+        <section aria-labelledby="history-heading" className={CARD}>
+          <h2 id="history-heading" className="text-[1.2rem] font-extrabold">
+            History
           </h2>
-          <PlanStatusBadge status={client.planStatus} />
-        </div>
-        <p className="text-text-dim">Renewals, services, payments and plan changes arrive here in phase 4.</p>
-      </section>
+          <ul className="flex flex-col">
+            {client.history.map((entry) => (
+              <li key={entry.id} className="flex flex-col border-t border-line-soft py-2.5 first:border-t-0">
+                <span>{entry.text}</span>
+                <span className="text-[0.81rem] text-text-dim">
+                  {formatDateTime(entry.at)} · by {entry.by}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      </div>
 
       <section aria-labelledby="account-heading" className={CARD}>
-        <h2 id="account-heading" className="text-[1.25rem] font-extrabold">
+        <h2 id="account-heading" className="text-[1.2rem] font-extrabold">
           Account
         </h2>
         <dl className="grid grid-cols-[repeat(auto-fit,minmax(min(200px,100%),1fr))] gap-x-6 gap-y-3">
@@ -82,30 +103,12 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
               action={sendPasswordResetAction}
               fields={{ clientId: client.id }}
             >
-              <p>
-                We&apos;ll email {client.email} a link to set a new password. Nothing changes until they use it.
-              </p>
+              <p>We&apos;ll email {client.email} a link to set a new password. Nothing changes until they use it.</p>
             </ConfirmPanel>
           </div>
         ) : (
           <p className="text-[0.94rem] text-text-dim">This client signs in with Google, so there&apos;s no password to reset.</p>
         )}
-      </section>
-
-      <section aria-labelledby="history-heading" className={CARD}>
-        <h2 id="history-heading" className="text-[1.25rem] font-extrabold">
-          History
-        </h2>
-        <ul className="flex flex-col">
-          {client.history.map((entry) => (
-            <li key={entry.id} className="flex flex-col border-t border-line-soft py-2.5 first:border-t-0">
-              <span>{entry.text}</span>
-              <span className="text-[0.81rem] text-text-dim">
-                {formatDateTime(entry.at)} · by {entry.by}
-              </span>
-            </li>
-          ))}
-        </ul>
       </section>
     </>
   );

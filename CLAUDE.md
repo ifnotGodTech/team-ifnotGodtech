@@ -33,6 +33,8 @@ The dashboard stores no data of its own. Everything it shows or changes goes thr
 - `src/components` (screens and their parts, grouped by area, plus shared `ui` primitives: buttons, inputs, tables, badges, confirm dialogs)
 - `src/lib/api` (the only route to the backend: one client, typed responses, failures turned into normalized errors)
 - `src/lib/auth` (the staff session, log in actions, and the one place where access is checked)
+- `src/lib/actions` (server actions that change data, each checking the session itself)
+- `src/lib/loaders` (data loading shared by several pages)
 - `src/proxy.ts` (restarts the 1-hour session on each request and sends signed-out visitors to log in; pages and actions still check the session themselves)
 - `src/shared` (validators, formatting for naira and dates, constants)
 - `src/types` (types matching the backend's API schema)

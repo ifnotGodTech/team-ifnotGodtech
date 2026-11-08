@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { CLIENTS_PAGE_SIZE, createStubBackend } from "./stub";
 import { STUB_CLIENTS } from "./stubData";
+import { memoryStubStore } from "./stubStore";
 
-const backend = createStubBackend();
+const backend = createStubBackend(Date.now, memoryStubStore());
 
 describe("stand-in clients", () => {
   it("lists newest clients first, a page at a time", async () => {

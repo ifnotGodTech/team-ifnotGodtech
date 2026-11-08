@@ -40,3 +40,7 @@ To log in to the stand-in, use any `@ifnotgod.com` email and any password. The e
 | Password `wrong-password` | A wrong email or password |
 | Email `locked@ifnotgod.com` | Too many attempts |
 | Any code but `123456` | A wrong code. Five wrong codes start the log in again. |
+
+The example clients and subscriptions are made up. Renewal dates are counted from today, so "Renewing in 7 days" always has something to show.
+
+Changes made on a client's behalf, such as cancelling or swapping services, are kept for a day in a cookie in your own browser. Nobody else sees them, and clearing your cookies starts afresh.
