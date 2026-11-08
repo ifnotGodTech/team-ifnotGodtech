@@ -1,0 +1,87 @@
+@import "tailwindcss";
+
+:root {
+  --color-ink: #0b0706;
+  --color-ink-line: #2c1e19;
+  --color-paper: #f7f1ec;
+  --color-card: #ffffff;
+  --color-text: #1b1210;
+  --color-text-dim: #4a3a34;
+  --color-on-ink-dim: #c9bcb5;
+  --color-line: #ddd0c8;
+  --color-line-soft: #ece2dc;
+  --color-field: #8b7a72;
+  --color-maroon: #6b1f2a;
+  --color-maroon-bright: #8c3140;
+  --color-maroon-tint: #fbf3f0;
+  --color-orange: #e07b2a;
+  --color-orange-text: #e8964f;
+  --color-success-bg: #e6f2ea;
+  --color-success: #1d5a33;
+  --color-warning-bg: #fff4e8;
+  --color-warning: #7a3d0c;
+  --color-neutral-bg: #ece2dc;
+
+  color-scheme: light;
+}
+
+@theme inline {
+  --color-ink: var(--color-ink);
+  --color-ink-line: var(--color-ink-line);
+  --color-paper: var(--color-paper);
+  --color-card: var(--color-card);
+  --color-text: var(--color-text);
+  --color-text-dim: var(--color-text-dim);
+  --color-on-ink-dim: var(--color-on-ink-dim);
+  --color-line: var(--color-line);
+  --color-line-soft: var(--color-line-soft);
+  --color-field: var(--color-field);
+  --color-maroon: var(--color-maroon);
+  --color-maroon-bright: var(--color-maroon-bright);
+  --color-maroon-tint: var(--color-maroon-tint);
+  --color-orange: var(--color-orange);
+  --color-orange-text: var(--color-orange-text);
+  --color-success-bg: var(--color-success-bg);
+  --color-success: var(--color-success);
+  --color-warning-bg: var(--color-warning-bg);
+  --color-warning: var(--color-warning);
+  --color-neutral-bg: var(--color-neutral-bg);
+
+  --font-display: var(--font-manrope);
+  --font-body: var(--font-public-sans);
+}
+
+body {
+  background: var(--color-paper);
+  color: var(--color-text);
+  font-family: var(--font-body), -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+@layer base {
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+  }
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-maroon);
+  outline-offset: 2px;
+}
+
+/* On the dark sidebar, maroon focus rings disappear. */
+.on-ink :focus-visible {
+  outline-color: var(--color-orange);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
