@@ -113,7 +113,7 @@ Agreed on 8 November 2026, from the updated mock: staff can add services and gro
 Needs `backend`. One vertical slice at a time, following `backend/implementation_plan.md`: catalogue (backend phase 2), staff log in (3), clients (4), subscriptions (5 and 6), overview (7) and site content (8). The backend writes and documents each API, then the matching functions in `src/lib/api` switch from the stand-in to it.
 
 - [x] Staff log in, sessions and emailed codes (backend phase 3, 9 November 2026). The session cookie is now encrypted and holds the backend's token. Every page confirms it with the backend, and log out revokes it, so the logged-out marker from phase 6 is gone. The stand-in's log in is removed. Browser tests run against a real backend started by `backend/scripts/serve_for_e2e.sh`, and read codes from its email files. Signed-in pages need JavaScript: they stream in behind the loading screen once the backend confirms the session. Log in still works without it.
-- [ ] Clients.
+- [ ] Clients. The backend's client endpoints are built (backend phase 4), but the dashboard switches to them in backend phase 5, with subscriptions: the subscription screens still use the stand-in's clients, and switching Clients alone would break their links.
 - [ ] Subscriptions, including actions on a client's behalf.
 - [ ] Overview figures.
 - [ ] Site content. With `WEB`: switch its `src/lib/catalogue` from the content files to the API, with cached pages that refresh after a save and keep the last good version if the API is down. `WEB` then lists each plan's lines and services from the data, with services naming the plans that include them instead of a lowest plan, and shows new service groups.

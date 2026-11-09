@@ -119,8 +119,10 @@ test("logging out ends the session everywhere, even if an old session cookie com
   await expect(page).toHaveURL(/\/login\?reason=signed-out$/);
   await expect(page.getByRole("status")).toHaveText("You've logged out.");
 
+  // A request still loading during log out can bring the cookie back, but its token is revoked, so
+  // either way the next page is log in.
   await page.goto("/clients");
-  await expect(page).toHaveURL(/\/login\?next=%2Fclients$/);
+  await expect(page).toHaveURL(/\/login\?(next=%2Fclients|reason=expired)$/);
 
   // A copy of the cookie still holds the token, but the backend revoked it on log out.
   await context.addCookies([before]);
