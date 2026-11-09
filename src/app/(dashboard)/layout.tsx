@@ -5,7 +5,7 @@ import { requireStaff } from "@/lib/auth";
 import { keepAliveAction } from "@/lib/auth/actions";
 
 export default async function DashboardLayout({ children }: LayoutProps<"/">) {
-  // Nothing is reachable on the live site until the real backend is connected (phase 7).
+  // Nothing is reachable on the live site until every screen uses the real backend.
   if (process.env.VERCEL_ENV === "production") notFound();
   const { staff, expiresAt } = await requireStaff();
 

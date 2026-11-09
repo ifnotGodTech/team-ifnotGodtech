@@ -2,7 +2,7 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 
 export default function AuthLayout({ children }: LayoutProps<"/">) {
-  // Nothing is reachable on the live site until the real backend is connected (phase 7).
+  // Nothing is reachable on the live site until every screen uses the real backend.
   if (process.env.VERCEL_ENV === "production") notFound();
 
   return (

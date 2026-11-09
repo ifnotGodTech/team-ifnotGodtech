@@ -84,6 +84,24 @@ describe("apiRequest", () => {
     });
   });
 
+  it("passes on the backend's limit messages and detail codes", async () => {
+    fetchMock.mockResolvedValueOnce(json(429, { message: "Too many wrong codes. Please log in again.", detailCode: "TOO_MANY_CODES" }));
+
+    expect(await apiRequest("/staff/log-in/code/", { method: "POST", schema })).toMatchObject({
+      ok: false,
+      error: { code: "RATE_LIMITED", message: "Too many wrong codes. Please log in again.", detailCode: "TOO_MANY_CODES" },
+    });
+  });
+
+  it("keeps a detail code but not the message when the message isn't for people", async () => {
+    fetchMock.mockResolvedValueOnce(json(401, { message: "Token revoked at 10:02", detailCode: "REVOKED" }));
+
+    const result = await apiRequest("/staff/me/", { schema });
+
+    expect(result).toMatchObject({ ok: false, error: { code: "UNAUTHENTICATED", detailCode: "REVOKED" } });
+    expect(!result.ok && result.error.message).toBe("Your session has ended. Please log in again.");
+  });
+
   it("never shows a server error's own text", async () => {
     fetchMock.mockResolvedValueOnce(json(500, { message: "Traceback: KeyError in views.py" }));
 

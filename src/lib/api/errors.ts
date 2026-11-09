@@ -16,6 +16,8 @@ export type ApiError = {
   message: string;
   /** Per-field messages from the backend's validation, keyed by field name. */
   fieldErrors: Record<string, string>;
+  /** The backend's more specific reason, such as "TOO_MANY_CODES", for screens that act on it. */
+  detailCode?: string;
 };
 
 export type ApiResult<T> = { ok: true; data: T } | { ok: false; error: ApiError };
@@ -45,7 +47,9 @@ export function codeForStatus(status: number): ApiErrorCode {
 export function apiError(
   code: ApiErrorCode,
   status: number | null = null,
-  details: { message?: string; fieldErrors?: Record<string, string> } = {}
+  details: { message?: string; fieldErrors?: Record<string, string>; detailCode?: string } = {}
 ): ApiError {
-  return { code, status, message: details.message || DEFAULT_MESSAGES[code], fieldErrors: details.fieldErrors ?? {} };
+  const error: ApiError = { code, status, message: details.message || DEFAULT_MESSAGES[code], fieldErrors: details.fieldErrors ?? {} };
+  if (details.detailCode) error.detailCode = details.detailCode;
+  return error;
 }

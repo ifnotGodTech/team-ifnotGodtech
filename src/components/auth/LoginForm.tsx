@@ -9,10 +9,9 @@ type LoginFormProps = {
   action: (state: AuthFormState, form: FormData) => Promise<AuthFormState>;
   next: string;
   notice: string | null;
-  standIn: boolean;
 };
 
-export function LoginForm({ action, next, notice, standIn }: LoginFormProps) {
+export function LoginForm({ action, next, notice }: LoginFormProps) {
   const [state, formAction, pending] = useActionState(action, INITIAL_AUTH_STATE);
 
   return (
@@ -33,11 +32,6 @@ export function LoginForm({ action, next, notice, standIn }: LoginFormProps) {
         {pending ? "Checking…" : "Continue"}
       </Button>
       <p className="text-[0.88rem] text-text-dim">Forgotten your password, or need access? Ask whoever manages team accounts.</p>
-      {standIn && (
-        <p className="rounded-md border border-dashed border-field px-3 py-2 text-[0.88rem] text-text-dim">
-          Stand-in backend: any @ifnotgod.com email works. Use the password &ldquo;wrong-password&rdquo; to see the error.
-        </p>
-      )}
     </form>
   );
 }

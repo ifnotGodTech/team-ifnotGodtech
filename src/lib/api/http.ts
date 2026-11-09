@@ -14,10 +14,10 @@ type RequestOptions<T> = {
   headers?: Record<string, string>;
 };
 
-/** Backend error bodies may carry a message and per-field messages. Anything else is ignored. */
-function readErrorBody(body: unknown): { message?: string; fieldErrors?: Record<string, string> } {
+/** Backend error bodies may carry a message, per-field messages and a detail code. Anything else is ignored. */
+function readErrorBody(body: unknown): { message?: string; fieldErrors?: Record<string, string>; detailCode?: string } {
   if (typeof body !== "object" || body === null) return {};
-  const { message, errors } = body as { message?: unknown; errors?: unknown };
+  const { message, errors, detailCode } = body as { message?: unknown; errors?: unknown; detailCode?: unknown };
   const fieldErrors: Record<string, string> = {};
   if (typeof errors === "object" && errors !== null) {
     for (const [field, value] of Object.entries(errors)) {
@@ -25,7 +25,11 @@ function readErrorBody(body: unknown): { message?: string; fieldErrors?: Record<
       if (typeof text === "string") fieldErrors[field] = text;
     }
   }
-  return { message: typeof message === "string" ? message : undefined, fieldErrors };
+  return {
+    message: typeof message === "string" ? message : undefined,
+    fieldErrors,
+    detailCode: typeof detailCode === "string" ? detailCode : undefined,
+  };
 }
 
 export async function apiRequest<T>(path: string, { method = "GET", body, schema, headers = {} }: RequestOptions<T>): Promise<ApiResult<T>> {
@@ -61,9 +65,10 @@ export async function apiRequest<T>(path: string, { method = "GET", body, schema
 
   if (!response.ok) {
     const code = codeForStatus(response.status);
-    // Only messages meant for people (validation and conflicts) are passed through.
-    const details = code === "VALIDATION" || code === "CONFLICT" ? readErrorBody(payload) : {};
-    return { ok: false, error: apiError(code, response.status, details) };
+    const { message, fieldErrors, detailCode } = readErrorBody(payload);
+    // Only messages meant for people (validation, conflicts and limits) are passed through.
+    const forPeople = code === "VALIDATION" || code === "CONFLICT" || code === "RATE_LIMITED";
+    return { ok: false, error: apiError(code, response.status, forPeople ? { message, fieldErrors, detailCode } : { detailCode }) };
   }
 
   const parsed = schema.safeParse(payload);

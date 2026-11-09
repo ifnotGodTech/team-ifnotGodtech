@@ -9,7 +9,7 @@ import { loginPath } from "@/lib/auth/paths";
 type SessionTimerProps = {
   /** When the session ends, as milliseconds since 1970. */
   expiresAt: number;
-  keepAlive: () => Promise<number>;
+  keepAlive: () => Promise<number | null>;
 };
 
 export const CHECK_EVERY_MS = 10_000;
@@ -56,7 +56,8 @@ export function SessionTimer({ expiresAt, keepAlive }: SessionTimerProps) {
       <Button
         onClick={async () => {
           const renewed = await keepAlive();
-          setClock({ now: Date.now(), expiresAt: renewed });
+          // Null when the server can't be reached: the warning stays, so they can try again.
+          if (renewed !== null) setClock({ now: Date.now(), expiresAt: renewed });
         }}
       >
         Stay signed in

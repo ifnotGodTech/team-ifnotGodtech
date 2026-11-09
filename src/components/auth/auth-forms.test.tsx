@@ -12,16 +12,15 @@ const returning = (state: Partial<AuthFormState>) =>
   vi.fn(async () => ({ formError: null, fieldErrors: {}, notice: null, values: {}, ...state }) as AuthFormState);
 
 describe("LoginForm", () => {
-  it("shows why the person is here, and the stand-in's test values", () => {
-    render(<LoginForm action={returning({})} next="/clients" notice="You've logged out." standIn />);
+  it("shows why the person is here", () => {
+    render(<LoginForm action={returning({})} next="/clients" notice="You've logged out." />);
 
     expect(screen.getByRole("status")).toHaveTextContent("You've logged out.");
-    expect(screen.getByText(/any @ifnotgod.com email works/)).toBeInTheDocument();
   });
 
   it("keeps the email and shows errors after a failed attempt", async () => {
     const user = userEvent.setup();
-    render(<LoginForm action={returning({ formError: "That email and password don't match a team account.", values: { email: "tunde@ifnotgod.com" } })} next="/" notice={null} standIn={false} />);
+    render(<LoginForm action={returning({ formError: "That email and password don't match a team account.", values: { email: "tunde@ifnotgod.com" } })} next="/" notice={null} />);
 
     await user.type(screen.getByLabelText("Password"), "nope");
     await user.click(screen.getByRole("button", { name: "Continue" }));
@@ -34,7 +33,7 @@ describe("LoginForm", () => {
 
 describe("CodeForm", () => {
   it("says where the code went and how long it lasts, with a numeric code field", () => {
-    render(<CodeForm verifyAction={returning({})} resendAction={returning({})} sentTo="tunde@ifnotgod.com" standInCode={null} />);
+    render(<CodeForm verifyAction={returning({})} resendAction={returning({})} sentTo="tunde@ifnotgod.com" />);
 
     expect(screen.getByText(/tunde@ifnotgod.com/)).toBeInTheDocument();
     expect(screen.getByText(/expires in 10 minutes/)).toBeInTheDocument();
@@ -44,12 +43,11 @@ describe("CodeForm", () => {
 
   it("confirms a new code was sent", async () => {
     const user = userEvent.setup();
-    render(<CodeForm verifyAction={returning({})} resendAction={returning({ notice: "We've sent a new code. Use the latest one." })} sentTo="t@ifnotgod.com" standInCode="123456" />);
+    render(<CodeForm verifyAction={returning({})} resendAction={returning({ notice: "We've sent a new code. Use the latest one." })} sentTo="t@ifnotgod.com" />);
 
     await user.click(screen.getByRole("button", { name: "Send a new code" }));
 
     expect(await screen.findByText("We've sent a new code. Use the latest one.")).toBeInTheDocument();
-    expect(screen.getByText(/The code is 123456/)).toBeInTheDocument();
   });
 });
 
@@ -76,6 +74,18 @@ describe("SessionTimer", () => {
 
     expect(keepAlive).toHaveBeenCalledTimes(1);
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("keeps warning when the server can't be reached, so the person can try again", async () => {
+    vi.useFakeTimers({ now: 0, shouldAdvanceTime: true });
+    const keepAlive = vi.fn(async () => null);
+    render(<SessionTimer expiresAt={4 * 60 * 1000} keepAlive={keepAlive} />);
+    act(() => vi.advanceTimersByTime(CHECK_EVERY_MS));
+
+    await userEvent.setup({ advanceTimers: vi.advanceTimersByTime }).click(screen.getByRole("button", { name: "Stay signed in" }));
+
+    expect(keepAlive).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("alert")).toBeInTheDocument();
   });
 
   it("sends the person to log in when the hour is up", () => {

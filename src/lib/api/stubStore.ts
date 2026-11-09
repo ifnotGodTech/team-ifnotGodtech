@@ -6,7 +6,7 @@ import { cookieSecret, signJson, verifyJson } from "@/lib/auth/signing";
 
 // Where the stand-in keeps changes made on a client's behalf: a signed cookie in the staff
 // member's own browser, so each person (and each browser test) sees only their own changes.
-// It needs no database, and disappears with the real backend in phase 7.
+// It needs no database, and goes once every screen uses the real backend.
 
 /** Payments never change here, so they're left out to keep the cookie small. */
 export type StoredSubscription = Omit<ClientSubscription, "payments">;

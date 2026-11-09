@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cookieSecret } from "@/lib/auth/signing";
-import { encodeSession, SESSION_COOKIE } from "@/lib/auth/session";
+import { checkSession, encodeSession, SESSION_COOKIE } from "@/lib/auth/session";
 import { proxy } from "./proxy";
 
 const staff = { id: "s1", name: "Tunde", email: "tunde@ifnotgod.com" };
@@ -18,16 +18,17 @@ describe("proxy", () => {
   });
 
   it("says why when the session has expired", () => {
-    const response = proxy(request("/clients", encodeSession(staff, cookieSecret(), Date.now() - 61 * 60 * 1000)));
+    const response = proxy(request("/clients", encodeSession(staff, "token", cookieSecret(), Date.now() - 61 * 60 * 1000)));
 
     expect(response.headers.get("location")).toBe("http://localhost/login?next=%2Fclients&reason=expired");
   });
 
   it("lets signed-in staff through and restarts their hour", () => {
-    const response = proxy(request("/clients", encodeSession(staff, cookieSecret(), Date.now() - 30 * 60 * 1000)));
+    const response = proxy(request("/clients", encodeSession(staff, "token", cookieSecret(), Date.now() - 30 * 60 * 1000)));
 
     expect(response.headers.get("location")).toBeNull();
     expect(response.cookies.get(SESSION_COOKIE)?.httpOnly).toBe(true);
+    expect(checkSession(response.cookies.get(SESSION_COOKIE)?.value, cookieSecret())).toMatchObject({ status: "active", token: "token" });
   });
 
   it("leaves log in pages and form posts alone", () => {

@@ -4,20 +4,27 @@ The internal tool our team uses to manage clients, subscriptions and the website
 
 ## Getting started
 
+Staff log in uses the real backend, so run it first (see `backend/README.md`) and create yourself a
+staff account there with `uv run python manage.py create_staff --email you@ifnotgod.com --name "Your Name"`.
+
 ```bash
 npm ci
-cp .env.example .env.local   # then set DASHBOARD_API_URL
+cp .env.example .env.local   # local values are in the file
 npm run dev                  # http://localhost:3001
 ```
 
-Without `DASHBOARD_API_URL`, every screen shows that the server can't be reached.
+Locally, the backend writes emails to files instead of sending them. Your log in code is in the newest
+file in `backend/.outbox/`.
+
+Without `DASHBOARD_API_URL`, log in shows that the server can't be reached.
 
 ## Environment variables
 
 | Variable | Required | Purpose |
 | --- | --- | --- |
 | `DASHBOARD_API_URL` | Yes | The backend API's address. Used only on the server, never sent to the browser. |
-| `DASHBOARD_SESSION_SECRET` | On Vercel | A long random string that signs the staff session cookie. Local development uses a built-in one. |
+| `DASHBOARD_APP_KEY` | Yes | The dashboard's own key for the backend. Must match the backend's `DASHBOARD_APP_KEY`. |
+| `DASHBOARD_SESSION_SECRET` | On Vercel | A long random string that encrypts the staff session cookie, which holds the backend's token. Local development uses a built-in one. |
 
 ## Scripts
 
@@ -27,19 +34,18 @@ Without `DASHBOARD_API_URL`, every screen shows that the server can't be reached
 | `npm run build` | Builds for production |
 | `npm run lint` | Runs ESLint |
 | `npm test` | Runs unit and component tests with Vitest |
-| `npm run test:e2e` | Runs browser tests against the production build. Run `npm run build` first. |
+| `npm run test:e2e` | Runs browser tests against the production build and a real backend. Run `npm run build` first. |
+
+The browser tests start a throwaway backend themselves, with `backend/scripts/serve_for_e2e.sh`: a fresh
+`ifnotgod_backend_e2e` database, one staff account, and emails written to `backend/.outbox-e2e/`, where
+the tests read log in codes. They need PostgreSQL running and the backend repo next to this one, or
+`BACKEND_DIR` pointing at it.
 
 ## The stand-in backend
 
-Until the real backend is connected (phase 7), the dashboard uses a stand-in with made-up data. It refuses to run on the live site, where every page returns "not found". Previews and local runs work as normal.
-
-To log in to the stand-in, use any `@ifnotgod.com` email and any password. The emailed code is always `123456`, and no email is sent. These values show the errors:
-
-| Value | Shows |
-| --- | --- |
-| Password `wrong-password` | A wrong email or password |
-| Email `locked@ifnotgod.com` | Too many attempts |
-| Any code but `123456` | A wrong code. Five wrong codes start the log in again. |
+Staff log in uses the real backend. Everything else still uses a stand-in with made-up data until its
+backend phase is built. The stand-in refuses to run on the live site, where every page returns "not
+found". Previews and local runs work as normal.
 
 The example clients and subscriptions are made up. Renewal dates are counted from today, so "Renewing in 7 days" always has something to show.
 

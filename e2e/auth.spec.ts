@@ -1,30 +1,33 @@
-import { expect, test } from "@playwright/test";
-import { logIn, STAND_IN_CODE } from "./helpers";
+import { expect, test, type Page } from "@playwright/test";
+import { latestCode, STAFF } from "./backend";
+import { enterEmailedCode, logInWithForm, submitPassword } from "./helpers";
 
-async function submitPassword(page: import("@playwright/test").Page, email = "tunde@ifnotgod.com") {
+// Log in against the real backend, starting signed out.
+test.use({ storageState: { cookies: [], origins: [] } });
+
+async function reachCodeStep(page: Page) {
   await page.goto("/login");
-  await page.getByLabel("Work email").fill(email);
-  await page.getByLabel("Password").fill("a password");
-  await page.getByRole("button", { name: "Continue" }).click();
-}
-
-async function reachCodeStep(page: import("@playwright/test").Page) {
   await submitPassword(page);
   await page.waitForURL(/\/login\/code$/);
+}
+
+/** Submits a form and waits for the server's answer, since repeated attempts show the same message. */
+async function submitAndWait(page: Page, button: string) {
+  await Promise.all([
+    page.waitForResponse((response) => response.request().method() === "POST"),
+    page.getByRole("button", { name: button }).click(),
+  ]);
 }
 
 test("signed-out visitors are sent to log in, then back to where they were going", async ({ page }) => {
   await page.goto("/subscriptions");
   await expect(page).toHaveURL(/\/login\?next=%2Fsubscriptions$/);
 
-  await page.getByLabel("Work email").fill("tunde@ifnotgod.com");
-  await page.getByLabel("Password").fill("a password");
-  await page.getByRole("button", { name: "Continue" }).click();
-  await page.getByLabel("Code", { exact: true }).fill(STAND_IN_CODE);
-  await page.getByRole("button", { name: "Log in" }).click();
+  await submitPassword(page);
+  await enterEmailedCode(page);
 
   await expect(page).toHaveURL(/\/subscriptions$/);
-  await expect(page.getByText("Signed in as tunde@ifnotgod.com")).toBeVisible();
+  await expect(page.getByText(`Signed in as ${STAFF.email}`)).toBeVisible();
 });
 
 test("the code step says where the code went", async ({ page }) => {
@@ -35,34 +38,43 @@ test("the code step says where the code went", async ({ page }) => {
 
 test("a wrong password is explained, keeping the email", async ({ page }) => {
   await page.goto("/login");
-  await page.getByLabel("Work email").fill("tunde@ifnotgod.com");
-  await page.getByLabel("Password").fill("wrong-password");
-  await page.getByRole("button", { name: "Continue" }).click();
+  await submitPassword(page, { password: "not the password" });
 
   await expect(page.locator("main form").getByRole("alert")).toHaveText("That email and password don't match a team account.");
-  await expect(page.getByLabel("Work email")).toHaveValue("tunde@ifnotgod.com");
+  await expect(page.getByLabel("Work email")).toHaveValue(STAFF.email);
 });
 
-test("a locked account is explained", async ({ page }) => {
-  await submitPassword(page, "locked@ifnotgod.com");
+test("an account is locked after 5 wrong passwords, without saying whether it exists", async ({ page }) => {
+  await page.goto("/login");
+  const alert = page.locator("main form").getByRole("alert");
+  // React clears the password after each attempt, so wait for that before typing the next one.
+  const tryPassword = async () => {
+    const password = page.getByLabel("Password");
+    await expect(password).toHaveValue("");
+    await page.getByLabel("Work email").fill("lockout@ifnotgod.com");
+    await password.fill("a guess");
+    await submitAndWait(page, "Continue");
+  };
 
-  await expect(page.locator("main form").getByRole("alert")).toContainText("Too many attempts");
+  for (let attempt = 1; attempt <= 5; attempt++) {
+    await tryPassword();
+    await expect(alert).toHaveText("That email and password don't match a team account.");
+  }
+  await tryPassword();
+
+  await expect(alert).toContainText("Too many attempts");
 });
 
 test("a wrong code is explained, and 5 wrong codes start the log in again", async ({ page }) => {
   await reachCodeStep(page);
 
-  // Each attempt shows the same message, so wait for each one's response before the next.
   // React clears the form after each attempt, so wait for that before typing the next code.
   const tryCode = async () => {
     const field = page.getByLabel("Code", { exact: true });
     await expect(field).toHaveValue("");
     await field.fill("000000");
     await expect(field).toHaveValue("000000");
-    await Promise.all([
-      page.waitForResponse((response) => response.request().method() === "POST"),
-      page.getByRole("button", { name: "Log in" }).click(),
-    ]);
+    await submitAndWait(page, "Log in");
   };
 
   for (let attempt = 1; attempt <= 4; attempt++) {
@@ -75,12 +87,22 @@ test("a wrong code is explained, and 5 wrong codes start the log in again", asyn
   await expect(page.locator("main form").getByRole("status")).toHaveText("Too many wrong codes. Please log in again.");
 });
 
-test("a new code can be sent", async ({ page }) => {
+test("a new code can be sent, and replaces the first", async ({ page }) => {
   await reachCodeStep(page);
+  const first = await latestCode();
 
   await page.getByRole("button", { name: "Send a new code" }).click();
-
   await expect(page.getByText("We've sent a new code. Use the latest one.")).toBeVisible();
+  const second = await latestCode();
+
+  if (first !== second) {
+    await page.getByLabel("Code", { exact: true }).fill(first);
+    await submitAndWait(page, "Log in");
+    await expect(page.locator("main form").getByRole("alert")).toHaveText("That code isn't right. Check it, or send a new one.");
+  }
+  await page.getByLabel("Code", { exact: true }).fill(second);
+  await page.getByRole("button", { name: "Log in" }).click();
+  await expect(page).toHaveURL(/localhost:3200\/$/);
 });
 
 test("the code page sends people without a log in in progress back to log in", async ({ page }) => {
@@ -89,8 +111,8 @@ test("the code page sends people without a log in in progress back to log in", a
   await expect(page).toHaveURL(/\/login$/);
 });
 
-test("logging out ends the session, even if an old session cookie comes back", async ({ page, context }) => {
-  await logIn(page);
+test("logging out ends the session everywhere, even if an old session cookie comes back", async ({ page, context }) => {
+  await logInWithForm(page);
   const before = (await context.cookies()).find((cookie) => cookie.name === "ifng_staff")!;
 
   await page.getByRole("button", { name: "Log out" }).click();
@@ -100,14 +122,15 @@ test("logging out ends the session, even if an old session cookie comes back", a
   await page.goto("/clients");
   await expect(page).toHaveURL(/\/login\?next=%2Fclients$/);
 
-  // As if a page that was loading when they logged out had sent back a refreshed session.
+  // A copy of the cookie still holds the token, but the backend revoked it on log out.
   await context.addCookies([before]);
   await page.goto("/clients");
-  await expect(page).toHaveURL(/\/login\?next=%2Fclients$/);
+  await expect(page).toHaveURL(/\/login\?reason=expired$/);
+  await expect(page.getByLabel("Work email")).toBeVisible();
 });
 
 test("the session cookie can't be read by scripts, and a forged one is refused", async ({ page, context }) => {
-  await logIn(page);
+  await logInWithForm(page);
   const cookie = (await context.cookies()).find((item) => item.name === "ifng_staff");
   expect(cookie).toMatchObject({ httpOnly: true, sameSite: "Lax" });
   expect(await page.evaluate(() => document.cookie)).not.toContain("ifng_staff");
@@ -121,7 +144,7 @@ test("the session cookie can't be read by scripts, and a forged one is refused",
 });
 
 test("signed-in staff skip the log in page", async ({ page }) => {
-  await logIn(page);
+  await logInWithForm(page);
 
   await page.goto("/login");
 
@@ -129,13 +152,9 @@ test("signed-in staff skip the log in page", async ({ page }) => {
 });
 
 test("a link can't send someone to another website after logging in", async ({ page }) => {
-  await reachCodeStep(page);
   await page.goto("/login?next=https://evil.example");
-  await page.getByLabel("Work email").fill("tunde@ifnotgod.com");
-  await page.getByLabel("Password").fill("a password");
-  await page.getByRole("button", { name: "Continue" }).click();
-  await page.getByLabel("Code", { exact: true }).fill(STAND_IN_CODE);
-  await page.getByRole("button", { name: "Log in" }).click();
+  await submitPassword(page);
+  await enterEmailedCode(page);
 
   await expect(page).toHaveURL(/localhost:3200\/$/);
 });
@@ -144,7 +163,7 @@ test.describe("without JavaScript", () => {
   test.use({ javaScriptEnabled: false });
 
   test("logging in still works", async ({ page }) => {
-    await logIn(page, "/clients");
+    await logInWithForm(page, "/clients");
 
     await expect(page.getByRole("heading", { level: 1, name: "Clients" })).toBeVisible();
   });

@@ -10,11 +10,9 @@ type CodeFormProps = {
   verifyAction: (state: AuthFormState, form: FormData) => Promise<AuthFormState>;
   resendAction: (state: AuthFormState) => Promise<AuthFormState>;
   sentTo: string;
-  /** The stand-in's fixed code, shown only while the stand-in is in use. */
-  standInCode: string | null;
 };
 
-export function CodeForm({ verifyAction, resendAction, sentTo, standInCode }: CodeFormProps) {
+export function CodeForm({ verifyAction, resendAction, sentTo }: CodeFormProps) {
   const [state, formAction, pending] = useActionState(verifyAction, INITIAL_AUTH_STATE);
   const [resent, resendFormAction, resending] = useActionState(resendAction, INITIAL_AUTH_STATE);
   const message = state.formError ?? resent.formError;
@@ -60,11 +58,6 @@ export function CodeForm({ verifyAction, resendAction, sentTo, standInCode }: Co
           Use a different account
         </Link>
       </div>
-      {standInCode && (
-        <p className="rounded-md border border-dashed border-field px-3 py-2 text-[0.88rem] text-text-dim">
-          Stand-in backend: no email is sent. The code is {standInCode}.
-        </p>
-      )}
     </div>
   );
 }
