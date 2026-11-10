@@ -12,10 +12,10 @@ vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("@/lib/auth", () => ({
   requireStaff: async () => {
     if (!mocks.signedIn) mocks.redirect("/login");
-    return { staff: { id: "s1", name: "Tunde", email: "tunde@ifnotgod.com" }, expiresAt: 0 };
+    return { staff: { id: "s1", name: "Tunde", email: "tunde@ifnotgod.com" }, token: "t0ken", expiresAt: 0 };
   },
 }));
-vi.mock("@/lib/api", () => ({ getBackend: () => mocks.backend }));
+vi.mock("@/lib/api/content", () => mocks.backend);
 
 import { saveGroupAction, savePlanAction, saveServiceAction, saveSiteTextAction, setServiceShownAction } from "./content";
 import { INITIAL_CONTENT_STATE } from "./formState";
@@ -71,9 +71,9 @@ describe("site content actions", () => {
     const state = await savePlanAction(INITIAL_CONTENT_STATE, form(PLAN_FORM));
 
     expect(mocks.backend.savePlan).toHaveBeenCalledWith(
+      "t0ken",
       "growth",
-      { monthlyPrice: 45_000, monthlyChanges: 1, allowances: { everyday: 3, agents: 1 }, lines: ["Priority WhatsApp support", "Monthly strategy call"], recommended: true },
-      "tunde@ifnotgod.com"
+      { monthlyPrice: 45_000, monthlyChanges: 1, allowances: { everyday: 3, agents: 1 }, lines: ["Priority WhatsApp support", "Monthly strategy call"], recommended: true }
     );
     expect(state.notice).toBe(
       "Saved. It appears on the website within a few minutes. New subscribers pay ₦45,000 straight away, and existing subscribers from their next renewal."
@@ -110,7 +110,7 @@ describe("site content actions", () => {
     mocks.backend.saveService.mockResolvedValue(OK);
 
     expect(await redirectedTo(saveServiceAction(INITIAL_CONTENT_STATE, form(SERVICE_FORM)))).toBe("/content?tab=services&saved=new-service");
-    expect(mocks.backend.saveService).toHaveBeenCalledWith({ id: null, name: "Monthly sales report", problem: "I never know how sales went.", group: "everyday", plans: ["growth", "pro"] }, "tunde@ifnotgod.com");
+    expect(mocks.backend.saveService).toHaveBeenCalledWith("t0ken", { id: null, name: "Monthly sales report", problem: "I never know how sales went.", group: "everyday", plans: ["growth", "pro"] });
     expect(await redirectedTo(saveServiceAction(INITIAL_CONTENT_STATE, form([["id", "daily-brief"], ...SERVICE_FORM])))).toBe("/content?tab=services&saved=service");
   });
 
@@ -118,7 +118,7 @@ describe("site content actions", () => {
     mocks.backend.setServiceShown.mockResolvedValue(OK);
 
     expect(await redirectedTo(setServiceShownAction(form([["serviceId", "ai-call-agent"], ["shown", "false"]])))).toBe("/content?tab=services&saved=hidden");
-    expect(mocks.backend.setServiceShown).toHaveBeenCalledWith("ai-call-agent", false, "tunde@ifnotgod.com");
+    expect(mocks.backend.setServiceShown).toHaveBeenCalledWith("t0ken", "ai-call-agent", false);
     expect(await redirectedTo(setServiceShownAction(form([["serviceId", "ai-call-agent"], ["shown", "true"]])))).toBe("/content?tab=services&saved=shown");
   });
 

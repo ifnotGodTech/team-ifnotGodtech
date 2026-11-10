@@ -15,9 +15,15 @@ export function RecentChanges({ changes }: { changes: RecentChange[] }) {
           {changes.map((change) => (
             <li key={change.id} className="flex flex-col border-t border-line-soft py-2.5 first:border-t-0">
               <span>
-                <Link href={`/clients/${change.clientId}`} className="font-semibold underline">
-                  {change.clientName}
-                </Link>
+                {change.clientId ? (
+                  <Link href={`/clients/${change.clientId}`} className="font-semibold underline">
+                    {change.clientName}
+                  </Link>
+                ) : (
+                  <Link href="/content" className="font-semibold underline">
+                    Site content
+                  </Link>
+                )}
                 : {change.text}
               </span>
               <span className="text-[0.81rem] text-text-dim">

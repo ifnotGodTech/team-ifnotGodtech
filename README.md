@@ -42,11 +42,7 @@ emails written to `backend/.outbox-e2e/`, where the tests read log in codes. The
 because they share that data. They need PostgreSQL running and the backend repo next to this one, or
 `BACKEND_DIR` pointing at it.
 
-## The stand-in backend
+## The live site
 
-Everything uses the real backend except site content, which keeps a stand-in until backend phase 8. The stand-in refuses to run on the live site, where every page returns "not
-found". Previews and local runs work as normal.
-
-The example clients and subscriptions are made up. Renewal dates are counted from today, so "Renewing in 7 days" always has something to show.
-
-Changes made on a client's behalf, such as cancelling or swapping services, are kept for a day in a cookie in your own browser. Nobody else sees them, and clearing your cookies starts afresh.
+Every screen uses the real backend. Until launch (backend phase 10), every page returns "not found" on the
+live site. Previews and local runs work as normal.

@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { STUB_CATALOGUE } from "@/lib/api/stubCatalogue";
+import { SAMPLE_CATALOGUE } from "@/test/sampleCatalogue";
 import { groupSchema, planGap, planSchema, plansList, removalNote, serviceSchema, siteTextSchema, slugOf } from "./content";
 
-const plans = STUB_CATALOGUE.plans;
+const plans = SAMPLE_CATALOGUE.plans;
 const PLAN = { monthlyPrice: "40,000", monthlyChanges: "1", allowances: { everyday: "3" }, lines: ["Priority WhatsApp support"], recommended: true };
 const errorsOf = (result: { success: boolean; error?: { issues: { path: PropertyKey[]; message: string }[] } }) =>
   Object.fromEntries((result.error?.issues ?? []).map((issue) => [issue.path.join("."), issue.message]));

@@ -6,7 +6,7 @@ import { PaymentsTable } from "@/components/subscriptions/PaymentsTable";
 import { SubscriptionPanel } from "@/components/subscriptions/SubscriptionPanel";
 import { ConfirmPanel } from "@/components/ui/ConfirmPanel";
 import { ErrorState } from "@/components/ui/States";
-import { getBackend } from "@/lib/api";
+import { getCatalogue } from "@/lib/api/content";
 import { getClient } from "@/lib/api/clients";
 import { getSubscription } from "@/lib/api/subscriptions";
 import { sendPasswordResetAction } from "@/lib/actions/clients";
@@ -26,8 +26,7 @@ const BACK = (
 export default async function ClientPage({ params, searchParams }: PageProps<"/clients/[id]">) {
   const { token } = await requireStaff();
   const [{ id }, query] = await Promise.all([params, searchParams]);
-  const backend = getBackend();
-  const [result, subscription, catalogue] = await Promise.all([getClient(token, id), getSubscription(token, id), backend.getCatalogue()]);
+  const [result, subscription, catalogue] = await Promise.all([getClient(token, id), getSubscription(token, id), getCatalogue(token)]);
 
   if (!result.ok && result.error.code === "NOT_FOUND") notFound();
   if (!result.ok) return <ErrorState message={result.error.message} action={BACK} />;

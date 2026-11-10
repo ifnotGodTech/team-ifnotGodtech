@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import * as subscriptions from "@/lib/api/subscriptions";
-import type { ApiResult } from "@/lib/api";
+import type { ApiResult } from "@/lib/api/errors";
 import { requireStaff } from "@/lib/auth";
 import type { ChoiceFormState } from "./formState";
 

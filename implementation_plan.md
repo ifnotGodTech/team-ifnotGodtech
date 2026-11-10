@@ -116,8 +116,9 @@ Needs `backend`. One vertical slice at a time, following `backend/implementation
 - [x] Clients, with subscriptions (backend phases 5 and 6, 10 November 2026).
 - [x] Subscriptions, including actions on a client's behalf. Browser tests run one at a time against a backend seeded with the stand-in's clients and plans.
 - [x] Overview figures (backend phase 7, 10 November 2026).
-- [ ] Site content. With `WEB`: switch its `src/lib/catalogue` from the content files to the API, with cached pages that refresh after a save and keep the last good version if the API is down. `WEB` then lists each plan's lines and services from the data, with services naming the plans that include them instead of a lowest plan, and shows new service groups.
-- [ ] Remove the stand-in, and the "not found on the live site" guard.
+- [x] Site content (backend phase 8, 10 November 2026). With `WEB`: switch its `src/lib/catalogue` from the content files to the API, with cached pages that refresh after a save and keep the last good version if the API is down. `WEB` then lists each plan's lines and services from the data, with services naming the plans that include them instead of a lowest plan, and shows new service groups.
+- [x] Remove the stand-in (10 November 2026).
+- [ ] Remove the "not found on the live site" guard (backend phase 10, at launch).
 - [ ] Tests: each function against the real API's responses, including its errors.
 
 ## Phase 8: Final checks and launch

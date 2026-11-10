@@ -6,7 +6,7 @@ import type { Catalogue, PlanId, Service, SiteText } from "@/types/catalogue";
 const FROM: Record<string, PlanId[]> = { starter: ["starter", "growth", "pro"], growth: ["growth", "pro"], pro: ["pro"] };
 const service = (id: string, group: string, name: string, from: keyof typeof FROM, problem: string): Service => ({ id, group, name, problem, plans: FROM[from], available: true });
 
-export const STUB_CATALOGUE: Catalogue = {
+export const SAMPLE_CATALOGUE: Catalogue = {
   plans: [
     { id: "starter", name: "Starter", monthlyPrice: 20_000, monthlyChanges: 1, allowances: { everyday: 1, social: 1, agents: 0 }, lines: ["Landing or link-in-bio page", "Email support"], recommended: false },
     { id: "growth", name: "Growth", monthlyPrice: 40_000, monthlyChanges: 1, allowances: { everyday: 3, social: 2, agents: 1 }, lines: ["Landing page with more sections", "Priority WhatsApp support"], recommended: true },
@@ -39,7 +39,7 @@ export const STUB_CATALOGUE: Catalogue = {
 };
 
 /** The home page text, as WEB shows it today. */
-export const STUB_SITE_TEXT: SiteText = {
+export const SAMPLE_SITE_TEXT: SiteText = {
   headline: "Your business, answering back while you sleep.",
   introduction:
     "We build and run AI automations that follow up leads, answer customers and handle repetitive work. You pay one monthly fee, and you don't need to touch any technology.",

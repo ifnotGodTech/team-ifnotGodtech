@@ -77,6 +77,9 @@ export function PlanCard({ action, plan, groups }: PlanCardProps) {
 
       <div className="flex flex-col gap-2 border-t border-line-soft pt-3">
         <h3 className="font-bold">Other things this plan lists</h3>
+        <p id={id("lines-hint")} className="text-[0.88rem] text-text-dim">
+          The first line is the website we build for the client: Pricing labels it &ldquo;Website we build&rdquo;, so keep it first.
+        </p>
         {lines.length === 0 ? (
           <p className="text-text-dim">Nothing else yet.</p>
         ) : (

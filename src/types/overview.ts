@@ -13,7 +13,8 @@ export type UpcomingRenewal = {
   reminder: ClientSubscription["reminder"];
 };
 
-export type RecentChange = ClientHistoryEntry & { clientId: string; clientName: string };
+/** A change to a client, or to site content, when the client fields are null. */
+export type RecentChange = ClientHistoryEntry & { clientId: string | null; clientName: string | null };
 
 export type Overview = {
   activeSubscriptions: number;

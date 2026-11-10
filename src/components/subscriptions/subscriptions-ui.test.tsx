@@ -1,17 +1,17 @@
 import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import { STUB_CATALOGUE } from "@/lib/api/stubCatalogue";
+import { SAMPLE_CATALOGUE } from "@/test/sampleCatalogue";
 import type { ChoiceFormState } from "@/lib/actions/formState";
 import { serviceChoices, pricedPlans } from "@/shared/subscriptions";
 import { PlanForm } from "./PlanForm";
 import { ServicesForm } from "./ServicesForm";
 
-const growth = STUB_CATALOGUE.plans[1];
+const growth = SAMPLE_CATALOGUE.plans[1];
 const ADA = ["lead-follow-up", "appointment-booking", "daily-brief", "scheduling-posting", "performance-report", "whatsapp-sales-agent"];
 
 function renderServices(action = vi.fn(async (): Promise<ChoiceFormState> => ({ formError: null, values: [] })), changesLeft = 1) {
-  render(<ServicesForm action={action} clientId="c-ada" choices={serviceChoices(growth, STUB_CATALOGUE, ADA)} current={ADA} changesLeft={changesLeft} />);
+  render(<ServicesForm action={action} clientId="c-ada" choices={serviceChoices(growth, SAMPLE_CATALOGUE, ADA)} current={ADA} changesLeft={changesLeft} />);
   return action;
 }
 
@@ -50,7 +50,7 @@ describe("ServicesForm", () => {
   });
 
   it("marks a service taken off the website that the client still has", () => {
-    const catalogue = structuredClone(STUB_CATALOGUE);
+    const catalogue = structuredClone(SAMPLE_CATALOGUE);
     catalogue.services.find((service) => service.id === "daily-brief")!.available = false;
     render(<ServicesForm action={vi.fn()} clientId="c-ada" choices={serviceChoices(growth, catalogue, ADA)} current={ADA} changesLeft={1} />);
 
@@ -61,7 +61,7 @@ describe("ServicesForm", () => {
 describe("PlanForm", () => {
   const renderPlan = (pendingPlanId: "pro" | null = null) =>
     render(
-      <PlanForm action={vi.fn(async () => ({ formError: null, values: [] }))} clientId="c-ada" plans={pricedPlans(STUB_CATALOGUE)} currentPlanId="growth" pendingPlanId={pendingPlanId} renewalDate="10 November 2026" />
+      <PlanForm action={vi.fn(async () => ({ formError: null, values: [] }))} clientId="c-ada" plans={pricedPlans(SAMPLE_CATALOGUE)} currentPlanId="growth" pendingPlanId={pendingPlanId} renewalDate="10 November 2026" />
     );
 
   it("offers Starter, Growth and Pro, and says when a change starts", async () => {

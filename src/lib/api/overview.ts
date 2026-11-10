@@ -24,7 +24,7 @@ const overviewSchema: z.ZodType<Overview> = z.object({
   nextCancellationEnds: z.string().nullable(),
   clientsWithoutPlan: z.number().int(),
   recentChanges: z.array(
-    z.object({ id: z.string(), at: z.string(), text: z.string(), by: z.string(), clientId: z.string(), clientName: z.string() })
+    z.object({ id: z.string(), at: z.string(), text: z.string(), by: z.string(), clientId: z.string().nullable(), clientName: z.string().nullable() })
   ),
 });
 

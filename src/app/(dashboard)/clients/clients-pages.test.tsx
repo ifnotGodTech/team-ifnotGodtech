@@ -10,8 +10,13 @@ vi.mock("next/navigation", () => ({ notFound, redirect: vi.fn() }));
 vi.mock("@/lib/auth", () => ({ requireStaff: async () => ({ staff: { email: "tunde@ifnotgod.com" }, token: "t0ken", expiresAt: 0 }) }));
 vi.mock("@/lib/actions/clients", () => ({ sendPasswordResetAction: vi.fn() }));
 vi.mock("@/lib/actions/subscriptions", () => ({ cancelSubscriptionAction: vi.fn(), keepSubscriptionAction: vi.fn() }));
-// The catalogue still comes from the stand-in, which keeps changes in a cookie; these tests start with none.
-vi.mock("next/headers", () => ({ cookies: async () => ({ get: () => undefined }) }));
+vi.mock("@/lib/api/content", async () => {
+  const { SAMPLE_CATALOGUE, SAMPLE_SITE_TEXT } = await import("@/test/sampleCatalogue");
+  return {
+    getCatalogue: async () => ({ ok: true, data: structuredClone(SAMPLE_CATALOGUE) }),
+    getSiteText: async () => ({ ok: true, data: structuredClone(SAMPLE_SITE_TEXT) }),
+  };
+});
 
 type Summary = { id: string; fullName: string; businessName?: string; email: string; planName: string | null; planStatus: "active" | "cancelled" | "none"; joinedOn: string };
 const ada: Summary = { id: "2", fullName: "Ada Obi", businessName: "Obi Logistics", email: "ada@obilogistics.com", planName: "Growth", planStatus: "active", joinedOn: "2026-10-08" };

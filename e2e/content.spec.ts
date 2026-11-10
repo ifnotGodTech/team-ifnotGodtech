@@ -1,7 +1,9 @@
 import { expect, test, type Page } from "@playwright/test";
+import { clientPath } from "./backend";
 import { logIn } from "./helpers";
 
-// Each test has its own browser, so content saved through the stand-in never leaks between tests.
+// Saves go to the shared test backend, and tests run one at a time, so each test's changes stay for the
+// tests after it. They're written so that doesn't matter.
 
 const planCard = (page: Page, name: string) => page.getByRole("form", { name });
 
@@ -51,7 +53,7 @@ test("explains a price that isn't valid, keeping what was typed", async ({ page 
   await expect(pro.getByLabel("Changes a month")).toHaveValue("3");
 });
 
-test("adds a service", async ({ page }) => {
+test("adds a service, which clients on its plans can then choose", async ({ page }) => {
   await logIn(page, "/content?tab=services");
 
   await page.getByRole("link", { name: "Add a service" }).click();
@@ -63,7 +65,12 @@ test("adds a service", async ({ page }) => {
 
   await expect(page.getByRole("status")).toHaveText("Service added. It appears on the website within a few minutes.");
   await expect(page.getByRole("region", { name: "Everyday automations" }).getByText("Monthly sales report")).toBeVisible();
-  // Clients choosing a new service comes back with phase 8, when site content is saved to the backend.
+
+  // Clients on its plans can choose it; clients on Starter can't.
+  await page.goto(clientPath("tolu", "/services"));
+  await expect(page.getByLabel("Monthly sales report")).toBeVisible();
+  await page.goto(clientPath("chinedu", "/services"));
+  await expect(page.getByLabel("Monthly sales report")).toHaveCount(0);
 });
 
 test("warns about a gap between plans and about clients who have a service, but still saves", async ({ page }) => {

@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { STUB_CATALOGUE } from "@/lib/api/stubCatalogue";
+import { SAMPLE_CATALOGUE } from "@/test/sampleCatalogue";
 import { allowanceLabel, checkServiceSelection, isSubscriptionFilter, paidLabel, pricedPlans, serviceChoices, servicesIncluded } from "./subscriptions";
 
-const plan = (id: string) => STUB_CATALOGUE.plans.find((item) => item.id === id)!;
-const growth = serviceChoices(plan("growth"), STUB_CATALOGUE);
+const plan = (id: string) => SAMPLE_CATALOGUE.plans.find((item) => item.id === id)!;
+const growth = serviceChoices(plan("growth"), SAMPLE_CATALOGUE);
 const GROWTH_SIX = ["lead-follow-up", "appointment-booking", "daily-brief", "scheduling-posting", "performance-report", "whatsapp-sales-agent"];
 
 describe("service choices", () => {
   it("offers each group the plan includes, with services from that plan or lower", () => {
-    const starter = serviceChoices(plan("starter"), STUB_CATALOGUE);
+    const starter = serviceChoices(plan("starter"), SAMPLE_CATALOGUE);
 
     expect(starter.map((choice) => choice.label)).toEqual(["1 everyday automation", "1 social or content service"]);
     expect(starter[1].services.map((service) => service.id)).not.toContain("dm-assistant");
@@ -16,7 +16,7 @@ describe("service choices", () => {
   });
 
   it("keeps a service taken off the website for a client who already has it, and hides it from others", () => {
-    const catalogue = structuredClone(STUB_CATALOGUE);
+    const catalogue = structuredClone(SAMPLE_CATALOGUE);
     catalogue.services.find((service) => service.id === "daily-brief")!.available = false;
     const ids = (current: string[]) => serviceChoices(plan("growth"), catalogue, current).flatMap((choice) => choice.services.map((service) => service.id));
 
@@ -25,9 +25,9 @@ describe("service choices", () => {
   });
 
   it("counts what each plan includes", () => {
-    expect(STUB_CATALOGUE.plans.map(servicesIncluded)).toEqual([2, 6, 12, null]);
-    expect(pricedPlans(STUB_CATALOGUE).map((item) => item.id)).toEqual(["starter", "growth", "pro"]);
-    expect(allowanceLabel(STUB_CATALOGUE.groups[2], "agreed")).toBe("AI agents");
+    expect(SAMPLE_CATALOGUE.plans.map(servicesIncluded)).toEqual([2, 6, 12, null]);
+    expect(pricedPlans(SAMPLE_CATALOGUE).map((item) => item.id)).toEqual(["starter", "growth", "pro"]);
+    expect(allowanceLabel(SAMPLE_CATALOGUE.groups[2], "agreed")).toBe("AI agents");
   });
 });
 

@@ -10,7 +10,7 @@ import { SiteTextForm } from "@/components/content/SiteTextForm";
 import { ButtonLink } from "@/components/ui/Button";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { ErrorState } from "@/components/ui/States";
-import { getBackend } from "@/lib/api";
+import { getCatalogue, getSiteText } from "@/lib/api/content";
 import { saveGroupAction, savePlanAction, saveServiceAction, saveSiteTextAction } from "@/lib/actions/content";
 import { requireStaff } from "@/lib/auth";
 import { WHEN_LIVE } from "@/shared/content";
@@ -30,12 +30,11 @@ const NOTICES: Record<string, [ok: boolean, text: string]> = {
 const GRID = "grid grid-cols-[repeat(auto-fit,minmax(min(320px,100%),1fr))] items-start gap-4";
 
 export default async function SiteContentPage({ searchParams }: PageProps<"/content">) {
-  await requireStaff();
+  const { token } = await requireStaff();
   const { tab: tabParam, edit, saved } = await searchParams;
   const tab: ContentTab = isContentTab(tabParam) ? tabParam : "plans";
   const editing = typeof edit === "string" ? edit : null;
-  const backend = getBackend();
-  const [catalogue, siteText] = await Promise.all([backend.getCatalogue(), tab === "text" ? backend.getSiteText() : null]);
+  const [catalogue, siteText] = await Promise.all([getCatalogue(token), tab === "text" ? getSiteText(token) : null]);
   const notice = typeof saved === "string" ? NOTICES[saved] : undefined;
 
   const header = (

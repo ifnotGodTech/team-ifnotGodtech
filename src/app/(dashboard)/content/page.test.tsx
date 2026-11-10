@@ -2,8 +2,14 @@ import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("next/navigation", () => ({ notFound: () => { throw new Error("NOT_FOUND"); }, redirect: vi.fn() }));
-vi.mock("next/headers", () => ({ cookies: async () => ({ get: () => undefined }) }));
-vi.mock("@/lib/auth", () => ({ requireStaff: async () => ({ staff: { email: "tunde@ifnotgod.com" }, expiresAt: 0 }) }));
+vi.mock("@/lib/api/content", async () => {
+  const { SAMPLE_CATALOGUE, SAMPLE_SITE_TEXT } = await import("@/test/sampleCatalogue");
+  return {
+    getCatalogue: async () => ({ ok: true, data: structuredClone(SAMPLE_CATALOGUE) }),
+    getSiteText: async () => ({ ok: true, data: structuredClone(SAMPLE_SITE_TEXT) }),
+  };
+});
+vi.mock("@/lib/auth", () => ({ requireStaff: async () => ({ staff: { email: "tunde@ifnotgod.com" }, token: "t0ken", expiresAt: 0 }) }));
 vi.mock("@/lib/actions/content", () => ({ savePlanAction: vi.fn(), saveServiceAction: vi.fn(), setServiceShownAction: vi.fn(), saveGroupAction: vi.fn(), saveSiteTextAction: vi.fn() }));
 
 import SiteContentPage from "./page";

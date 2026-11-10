@@ -3,8 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { getBackend } from "@/lib/api";
-import type { ApiResult } from "@/lib/api";
+import type { ApiResult } from "@/lib/api/errors";
+import * as content from "@/lib/api/content";
 import { requireStaff } from "@/lib/auth";
 import { fieldErrorsOf, groupSchema, planSchema, serviceSchema, siteTextSchema, WHEN_LIVE } from "@/shared/content";
 import { formatNaira } from "@/shared/format";
@@ -41,7 +41,7 @@ const optionalId = (value: FormDataEntryValue | null) => {
 };
 
 export async function savePlanAction(_: ContentFormState, form: FormData): Promise<ContentFormState> {
-  const { staff } = await requireStaff();
+  const { token } = await requireStaff();
   const planId = z.enum(["starter", "growth", "pro"]).safeParse(form.get("planId"));
   if (!planId.success) return { formError: "That plan can't be edited here.", fieldErrors: {}, notice: null };
 
@@ -57,7 +57,7 @@ export async function savePlanAction(_: ContentFormState, form: FormData): Promi
   });
   if (!parsed.success) return invalid(fieldErrorsOf(parsed.error));
 
-  const result = await call(() => getBackend().savePlan(planId.data, parsed.data, staff.email));
+  const result = await call(() => content.savePlan(token, planId.data, parsed.data));
   if (!result?.ok) return failed(result);
 
   revalidatePath("/content");
@@ -72,7 +72,7 @@ export async function savePlanAction(_: ContentFormState, form: FormData): Promi
 }
 
 export async function saveServiceAction(_: ContentFormState, form: FormData): Promise<ContentFormState> {
-  const { staff } = await requireStaff();
+  const { token } = await requireStaff();
   const parsed = serviceSchema.safeParse({
     id: optionalId(form.get("id")),
     name: String(form.get("name") ?? ""),
@@ -82,23 +82,23 @@ export async function saveServiceAction(_: ContentFormState, form: FormData): Pr
   });
   if (!parsed.success) return invalid(fieldErrorsOf(parsed.error));
 
-  const result = await call(() => getBackend().saveService(parsed.data, staff.email));
+  const result = await call(() => content.saveService(token, parsed.data));
   if (!result?.ok) return failed(result);
   redirect(`/content?tab=services&saved=${parsed.data.id ? "service" : "new-service"}`);
 }
 
 export async function setServiceShownAction(form: FormData): Promise<void> {
-  const { staff } = await requireStaff();
+  const { token } = await requireStaff();
   const id = optionalId(form.get("serviceId"));
   if (!id) redirect("/content?tab=services");
   const shown = form.get("shown") === "true";
 
-  const result = await call(() => getBackend().setServiceShown(id, shown, staff.email));
+  const result = await call(() => content.setServiceShown(token, id, shown));
   redirect(`/content?tab=services&saved=${result?.ok ? (shown ? "shown" : "hidden") : "failed"}`);
 }
 
 export async function saveGroupAction(_: ContentFormState, form: FormData): Promise<ContentFormState> {
-  const { staff } = await requireStaff();
+  const { token } = await requireStaff();
   const parsed = groupSchema.safeParse({
     id: optionalId(form.get("id")),
     name: String(form.get("name") ?? ""),
@@ -107,7 +107,7 @@ export async function saveGroupAction(_: ContentFormState, form: FormData): Prom
   });
   if (!parsed.success) return invalid(fieldErrorsOf(parsed.error));
 
-  const result = await call(() => getBackend().saveGroup(parsed.data, staff.email));
+  const result = await call(() => content.saveGroup(token, parsed.data));
   if (!result?.ok) return failed(result);
   if (!parsed.data.id) redirect("/content?tab=groups&saved=new-group");
   revalidatePath("/content");
@@ -115,7 +115,7 @@ export async function saveGroupAction(_: ContentFormState, form: FormData): Prom
 }
 
 export async function saveSiteTextAction(_: ContentFormState, form: FormData): Promise<ContentFormState> {
-  const { staff } = await requireStaff();
+  const { token } = await requireStaff();
   const parsed = siteTextSchema.safeParse({
     headline: String(form.get("headline") ?? ""),
     introduction: String(form.get("introduction") ?? ""),
@@ -123,7 +123,7 @@ export async function saveSiteTextAction(_: ContentFormState, form: FormData): P
   });
   if (!parsed.success) return invalid(fieldErrorsOf(parsed.error));
 
-  const result = await call(() => getBackend().saveSiteText(parsed.data, staff.email));
+  const result = await call(() => content.saveSiteText(token, parsed.data));
   if (!result?.ok) return failed(result);
   revalidatePath("/content");
   return { formError: null, fieldErrors: {}, notice: `Saved. ${WHEN_LIVE}` };

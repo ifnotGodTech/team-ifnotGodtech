@@ -50,6 +50,16 @@ describe("overview page", () => {
     );
   });
 
+  it("shows a site content change, linking to Site content", async () => {
+    await show({
+      recentChanges: [{ id: "y", at: "2026-11-10T10:00:00Z", text: "Saved the Growth plan.", by: "tunde@ifnotgod.com", clientId: null, clientName: null }],
+    });
+
+    const change = within(screen.getByRole("region", { name: "Recent changes" })).getByRole("listitem");
+    expect(change).toHaveTextContent("Site content: Saved the Growth plan.");
+    expect(within(change).getByRole("link", { name: "Site content" })).toHaveAttribute("href", "/content");
+  });
+
   it("explains empty lists", async () => {
     await show({});
 
