@@ -1,5 +1,7 @@
 import { notFound } from "next/navigation";
 import { getBackend } from "@/lib/api";
+import { getClient } from "@/lib/api/clients";
+import { getSubscription } from "@/lib/api/subscriptions";
 import type { ApiError } from "@/lib/api";
 import type { Catalogue } from "@/types/catalogue";
 import type { ClientDetail } from "@/types/client";
@@ -10,9 +12,8 @@ export type LoadedSubscription =
   | { ok: false; error: ApiError };
 
 /** A client, their subscription and the catalogue, for the pages that change a subscription. */
-export async function loadSubscription(id: string): Promise<LoadedSubscription> {
-  const backend = getBackend();
-  const [client, subscription, catalogue] = await Promise.all([backend.getClient(id), backend.getSubscription(id), backend.getCatalogue()]);
+export async function loadSubscription(token: string, id: string): Promise<LoadedSubscription> {
+  const [client, subscription, catalogue] = await Promise.all([getClient(token, id), getSubscription(token, id), getBackend().getCatalogue()]);
   if (!client.ok && client.error.code === "NOT_FOUND") notFound();
   if (!client.ok) return client;
   if (!subscription.ok) return subscription;

@@ -5,7 +5,7 @@ import { SubscriptionStatusBadge } from "@/components/subscriptions/Subscription
 import { DataTable } from "@/components/ui/DataTable";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { EmptyState, ErrorState } from "@/components/ui/States";
-import { getBackend } from "@/lib/api";
+import { listSubscriptions } from "@/lib/api/subscriptions";
 import { requireStaff } from "@/lib/auth";
 import { formatShortDate } from "@/shared/format";
 import { isSubscriptionFilter, periodLabel, RENEWING_SOON_DAYS } from "@/shared/subscriptions";
@@ -51,10 +51,10 @@ const EMPTY: Record<SubscriptionFilter, [string, string]> = {
 };
 
 export default async function SubscriptionsPage({ searchParams }: PageProps<"/subscriptions">) {
-  await requireStaff();
+  const { token } = await requireStaff();
   const { show } = await searchParams;
   const filter: SubscriptionFilter = isSubscriptionFilter(show) ? show : "all";
-  const result = await getBackend().listSubscriptions(filter);
+  const result = await listSubscriptions(token, filter);
 
   return (
     <>

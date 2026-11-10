@@ -9,8 +9,8 @@ import { serviceChoices } from "@/shared/subscriptions";
 export const metadata: Metadata = { title: "Change services" };
 
 export default async function ChangeServicesPage({ params }: PageProps<"/clients/[id]/services">) {
-  await requireStaff();
-  const loaded = await loadSubscription((await params).id);
+  const { token } = await requireStaff();
+  const loaded = await loadSubscription(token, (await params).id);
 
   return (
     <ChangePageFrame loaded={loaded} title="Change services">

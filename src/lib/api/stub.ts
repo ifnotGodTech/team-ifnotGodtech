@@ -1,6 +1,6 @@
-import type { ClientDetail, ClientHistoryEntry, ClientSummary } from "@/types/client";
-import type { ClientSubscription, SubscriptionFilter, SubscriptionRow } from "@/types/subscription";
-import { checkServiceSelection, paidLabel, pricedPlans, RENEWING_SOON_DAYS, serviceChoices, servicesIncluded } from "@/shared/subscriptions";
+import type { ClientDetail, ClientHistoryEntry } from "@/types/client";
+import type { ClientSubscription, SubscriptionFilter } from "@/types/subscription";
+import { paidLabel, RENEWING_SOON_DAYS } from "@/shared/subscriptions";
 import type { DashboardBackend } from "./backend";
 import { apiError, type ApiResult } from "./errors";
 import type { Catalogue, Plan, Service, ServiceGroup } from "@/types/catalogue";
@@ -8,22 +8,12 @@ import { fieldErrorsOf, groupSchema, planUpdateSchema, serviceSchema, siteTextSc
 import { STUB_CATALOGUE, STUB_SITE_TEXT } from "./stubCatalogue";
 import { STUB_CLIENTS } from "./stubData";
 import { cookieStubStore, type StubChanges, type StubStore } from "./stubStore";
-import { addDays, lagosToday, reminderFor, seedSubscriptions } from "./stubSubscriptions";
+import { addDays, lagosToday, seedSubscriptions } from "./stubSubscriptions";
 
 // A stand-in for the parts of the backend not built yet. Staff log in already uses the real API
 // (src/lib/api/staffAuth.ts). Changes made here live in cookies, and no email is sent.
 export const CLIENTS_PAGE_SIZE = 10;
 export const RECENT_CHANGES_SHOWN = 8;
-
-const summaryOf = ({ id, fullName, businessName, email, planName, planStatus, joinedOn }: ClientSummary): ClientSummary => ({
-  id,
-  fullName,
-  businessName,
-  email,
-  planName,
-  planStatus,
-  joinedOn,
-});
 
 const ok = <T>(data: T): ApiResult<T> => ({ ok: true, data });
 const notFound = (): ApiResult<never> => ({ ok: false, error: apiError("NOT_FOUND", 404) });
@@ -45,18 +35,6 @@ function newId(name: string, taken: string[]): string {
   for (let n = 2; taken.includes(id); n++) id = `${base}-${n}`;
   return id;
 }
-const list = (names: string[]) => (names.length < 2 ? names.join("") : `${names.slice(0, -1).join(", ")} and ${names.at(-1)}`);
-
-function servicesChangeText(before: string[], after: string[], catalogue: Catalogue): string {
-  const serviceNamed = (id: string) => catalogue.services.find((service) => service.id === id)?.name ?? id;
-  const added = after.filter((id) => !before.includes(id)).map(serviceNamed);
-  const removed = before.filter((id) => !after.includes(id)).map(serviceNamed);
-  if (before.length === 0) return `Chose services: ${list(added)}`;
-  if (added.length && removed.length) return `Swapped ${list(removed)} for ${list(added)}`;
-  if (added.length) return `Added ${list(added)}`;
-  return `Removed ${list(removed)}`;
-}
-
 /** A cancelled plan ends once its paid period is over. */
 function withStatusToday(subscription: ClientSubscription, today: string): ClientSubscription {
   return subscription.status === "cancelled" && subscription.currentPeriodEnd < today ? { ...subscription, status: "ended" } : subscription;
@@ -123,57 +101,7 @@ export function createStubBackend(now = () => Date.now(), store: StubStore = coo
     };
   }
 
-  /** Applies a change on a client's behalf, recording who made it. */
-  async function change(
-    clientId: string,
-    staffEmail: string,
-    apply: (subscription: ClientSubscription, catalogue: Catalogue) => ApiResult<{ next: ClientSubscription; text: string }>
-  ): Promise<ApiResult<ClientSubscription>> {
-    if (!STUB_CLIENTS.some((client) => client.id === clientId)) return notFound();
-    const { changes, byClient } = await subscriptions();
-    const current = byClient[clientId];
-    if (!current) return refused("This client doesn't have a plan.");
-
-    const result = apply(current, await liveCatalogue());
-    if (!result.ok) return result;
-
-    const { payments, ...stored } = result.data.next;
-    const entry: ClientHistoryEntry = { id: `${clientId}-${now()}`, at: new Date(now()).toISOString(), text: result.data.text, by: staffEmail };
-    await store.write({
-      subscriptions: { ...changes.subscriptions, [clientId]: stored },
-      history: { ...changes.history, [clientId]: [entry, ...(changes.history[clientId] ?? [])] },
-    });
-    return ok({ ...stored, payments });
-  }
-
   return {
-    async searchClients({ query, page, withoutPlan = false }) {
-      const words = query.trim().toLowerCase();
-      const clients = await Promise.all(STUB_CLIENTS.map(liveClient));
-      const matches = clients.filter((client) =>
-        (!withoutPlan || client.planStatus === "none") && (!words || [client.fullName, client.businessName ?? "", client.email].some((value) => value.toLowerCase().includes(words)))
-      ).sort((a, b) => b.joinedOn.localeCompare(a.joinedOn));
-
-      const pages = Math.max(1, Math.ceil(matches.length / CLIENTS_PAGE_SIZE));
-      const current = Math.min(Math.max(1, Math.floor(page) || 1), pages);
-      const start = (current - 1) * CLIENTS_PAGE_SIZE;
-      return ok({ items: matches.slice(start, start + CLIENTS_PAGE_SIZE).map(summaryOf), total: matches.length, page: current, pageSize: CLIENTS_PAGE_SIZE });
-    },
-
-    async getClient(id) {
-      const client = STUB_CLIENTS.find((item) => item.id === id);
-      return client ? ok(await liveClient(client)) : notFound();
-    },
-
-    async sendPasswordReset(id) {
-      const client = STUB_CLIENTS.find((item) => item.id === id);
-      if (!client) return { ok: false, error: apiError("NOT_FOUND", 404) };
-      if (client.signInMethod === "google") {
-        return { ok: false, error: apiError("VALIDATION", 422, { message: "This client signs in with Google, so there's no password to reset." }) };
-      }
-      return ok(null);
-    },
-
     async getOverview() {
       const { byClient } = await subscriptions();
       const catalogue = await liveCatalogue();
@@ -212,91 +140,6 @@ export function createStubBackend(now = () => Date.now(), store: StubStore = coo
 
     async getCatalogue() {
       return ok(await liveCatalogue());
-    },
-
-    async listSubscriptions(filter) {
-      const { byClient } = await subscriptions();
-      const catalogue = await liveCatalogue();
-      const date = today();
-      const entries = Object.entries(byClient);
-      const counts = { all: 0, active: 0, renewing: 0, cancelled: 0 };
-      for (const id of Object.keys(counts) as SubscriptionFilter[]) {
-        counts[id] = entries.filter(([, subscription]) => matchesFilter(subscription, id, date)).length;
-      }
-      const items: SubscriptionRow[] = entries
-        .filter(([, subscription]) => matchesFilter(subscription, filter, date))
-        .sort(([, a], [, b]) => a.currentPeriodEnd.localeCompare(b.currentPeriodEnd))
-        .map(([clientId, subscription]) => ({
-          clientId,
-          clientName: STUB_CLIENTS.find((client) => client.id === clientId)!.fullName,
-          planName: planNamed(subscription.planId).name,
-          pendingPlanName: subscription.pendingPlanId ? planNamed(subscription.pendingPlanId).name : null,
-          billingPeriod: subscription.billingPeriod,
-          status: subscription.status,
-          currentPeriodEnd: subscription.currentPeriodEnd,
-          servicesChosen: subscription.serviceIds.length,
-          servicesIncluded: servicesIncluded(livePlan(catalogue, subscription.planId)),
-        }));
-      return ok({ items, counts });
-    },
-
-    async getSubscription(clientId) {
-      if (!STUB_CLIENTS.some((client) => client.id === clientId)) return notFound();
-      return ok((await subscriptions()).byClient[clientId] ?? null);
-    },
-
-    cancelSubscription(clientId, staffEmail) {
-      return change(clientId, staffEmail, (current) => {
-        if (current.status !== "active") return refused("This plan is already cancelled.");
-        return ok({ next: { ...current, status: "cancelled", pendingPlanId: null, reminder: null }, text: "Cancelled the subscription" });
-      });
-    },
-
-    keepSubscription(clientId, staffEmail) {
-      return change(clientId, staffEmail, (current) => {
-        if (current.status === "ended") return refused("This plan has already ended, so the client needs to subscribe again.");
-        if (current.status !== "cancelled") return refused("This plan isn't cancelled.");
-        return ok({
-          next: { ...current, status: "active", reminder: reminderFor("active", current.currentPeriodEnd, today()) },
-          text: "Kept the plan after it was cancelled",
-        });
-      });
-    },
-
-    updateServices(clientId, serviceIds, staffEmail) {
-      return change(clientId, staffEmail, (current, catalogue) => {
-        if (current.status !== "active") return refused("Services can only be changed on an active plan.");
-        const plan = livePlan(catalogue, current.planId);
-        const check = checkServiceSelection(serviceChoices(plan, catalogue, current.serviceIds), current.serviceIds, serviceIds, current.changesLeftThisMonth);
-        if (!check.ok) {
-          if (check.reason === "too-many") return invalid(`The ${plan.name} plan includes ${check.allowance} ${check.allowance === 1 ? check.group!.unitSingular : check.group!.unitPlural}. Choose fewer.`);
-          if (check.reason === "no-changes-left") {
-            const left = current.changesLeftThisMonth;
-            return invalid(`That would use ${check.changesUsed} ${check.changesUsed === 1 ? "change" : "changes"}, but the client has ${left === 0 ? "none" : left} left this month.`);
-          }
-          return invalid("Some of those services aren't part of this plan.");
-        }
-        if (check.changesUsed === 0 && serviceIds.length === current.serviceIds.length && serviceIds.every((id) => current.serviceIds.includes(id))) {
-          return invalid("Nothing has changed.");
-        }
-        return ok({
-          next: { ...current, serviceIds, changesLeftThisMonth: current.changesLeftThisMonth - check.changesUsed },
-          text: servicesChangeText(current.serviceIds, serviceIds, catalogue),
-        });
-      });
-    },
-
-    changePlan(clientId, planId, staffEmail) {
-      return change(clientId, staffEmail, (current) => {
-        if (current.status !== "active") return refused("The plan can only be changed while it's active.");
-        if (!pricedPlans(STUB_CATALOGUE).some((plan) => plan.id === planId)) return invalid("Choose Starter, Growth or Pro.");
-        const pendingPlanId = planId === current.planId ? null : planId;
-        if (pendingPlanId === current.pendingPlanId) return invalid("Nothing has changed.");
-        return ok({
-          next: { ...current, pendingPlanId },
-          text: pendingPlanId ? `Plan changes to ${planNamed(pendingPlanId).name} at the next renewal` : "Cancelled the waiting plan change",
-        });
-      });
     },
 
     async savePlan(planId, input) {

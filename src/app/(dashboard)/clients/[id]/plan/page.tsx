@@ -10,8 +10,8 @@ import { pricedPlans } from "@/shared/subscriptions";
 export const metadata: Metadata = { title: "Change plan" };
 
 export default async function ChangePlanPage({ params }: PageProps<"/clients/[id]/plan">) {
-  await requireStaff();
-  const loaded = await loadSubscription((await params).id);
+  const { token } = await requireStaff();
+  const loaded = await loadSubscription(token, (await params).id);
 
   return (
     <ChangePageFrame loaded={loaded} title="Change plan">

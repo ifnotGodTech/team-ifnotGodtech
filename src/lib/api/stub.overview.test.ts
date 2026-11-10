@@ -41,26 +41,4 @@ describe("stand-in overview", () => {
     const times = recentChanges.map((change) => change.at);
     expect(times).toEqual([...times].sort().reverse());
   });
-
-  it("reflects changes made on a client's behalf", async () => {
-    const backend = fresh();
-    await backend.cancelSubscription("c-ada", "tunde@ifnotgod.com");
-    const overview = await overviewOf(backend);
-
-    expect(overview).toMatchObject({ activeSubscriptions: 7, cancelledStillRunning: 3, nextCancellationEnds: "2026-11-10" });
-    expect(overview.renewingSoon.map((row) => row.clientName)).not.toContain("Ada Obi");
-    expect(overview.recentChanges[0]).toMatchObject({ clientName: "Ada Obi", text: "Cancelled the subscription", by: "tunde@ifnotgod.com" });
-  });
-
-  it("finds clients without a plan, with or without a search", async () => {
-    const backend = fresh();
-    const names = async (query: string) => {
-      const result = await backend.searchClients({ query, page: 1, withoutPlan: true });
-      return result.ok ? result.data.items.map((client) => client.fullName) : [];
-    };
-
-    expect(await names("")).toEqual(["Musa Bello", "Halima Yusuf", "Ngozi Umeh"]);
-    expect(await names("halima")).toEqual(["Halima Yusuf"]);
-    expect(await names("ada")).toEqual([]);
-  });
 });

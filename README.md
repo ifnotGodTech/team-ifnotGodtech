@@ -37,14 +37,15 @@ Without `DASHBOARD_API_URL`, log in shows that the server can't be reached.
 | `npm run test:e2e` | Runs browser tests against the production build and a real backend. Run `npm run build` first. |
 
 The browser tests start a throwaway backend themselves, with `backend/scripts/serve_for_e2e.sh`: a fresh
-`ifnotgod_backend_e2e` database, one staff account, and emails written to `backend/.outbox-e2e/`, where
-the tests read log in codes. They need PostgreSQL running and the backend repo next to this one, or
+`ifnotgod_backend_e2e` database, one staff account, the clients and plans the stand-in used to show, and
+emails written to `backend/.outbox-e2e/`, where the tests read log in codes. The tests run one at a time,
+because they share that data. They need PostgreSQL running and the backend repo next to this one, or
 `BACKEND_DIR` pointing at it.
 
 ## The stand-in backend
 
-Staff log in uses the real backend. Everything else still uses a stand-in with made-up data until its
-backend phase is built. The stand-in refuses to run on the live site, where every page returns "not
+Staff log in, clients and subscriptions use the real backend. The overview and site content still use a stand-in
+with made-up data until their backend phases are built. The stand-in refuses to run on the live site, where every page returns "not
 found". Previews and local runs work as normal.
 
 The example clients and subscriptions are made up. Renewal dates are counted from today, so "Renewing in 7 days" always has something to show.

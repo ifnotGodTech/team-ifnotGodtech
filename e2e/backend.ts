@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { readdir, readFile, stat } from "node:fs/promises";
 import path from "node:path";
 
@@ -6,6 +7,16 @@ import path from "node:path";
 export const API_PORT = 8100;
 export const BACKEND_DIR = process.env.BACKEND_DIR ?? path.resolve(__dirname, "../../backend");
 export const OUTBOX_DIR = path.join(BACKEND_DIR, ".outbox-e2e");
+/** Where the test backend writes its seeded clients' ids, by first name (see seed_e2e_dashboard). */
+export const SEED_IDS_FILE = path.join(OUTBOX_DIR, "..", ".e2e-dashboard-ids.json");
+
+/** A seeded client's page, such as clientPath("ada", "/services") for /clients/2/services. */
+export function clientPath(name: string, rest = ""): string {
+  const ids = JSON.parse(readFileSync(SEED_IDS_FILE, "utf8")) as Record<string, number>;
+  if (!ids[name]) throw new Error(`No seeded client called ${name}`);
+  return `/clients/${ids[name]}${rest}`;
+}
+
 /** The signed-in session saved by staff.setup.ts. */
 export const STAFF_STATE = path.join(__dirname, ".auth", "staff.json");
 

@@ -11,10 +11,10 @@ vi.mock("next/navigation", () => ({ redirect: mocks.redirect }));
 vi.mock("@/lib/auth", () => ({
   requireStaff: async () => {
     if (!mocks.signedIn) mocks.redirect("/login");
-    return { staff: { id: "s1", name: "Tunde", email: "tunde@ifnotgod.com" }, expiresAt: 0 };
+    return { staff: { id: "s1", name: "Tunde", email: "tunde@ifnotgod.com" }, token: "t0ken", expiresAt: 0 };
   },
 }));
-vi.mock("@/lib/api", () => ({ getBackend: () => mocks.backend }));
+vi.mock("@/lib/api/subscriptions", () => mocks.backend);
 
 import { INITIAL_CHOICE_STATE } from "./formState";
 import { cancelSubscriptionAction, changePlanAction, keepSubscriptionAction, updateServicesAction } from "./subscriptions";
@@ -51,12 +51,12 @@ describe("subscription actions", () => {
     expect(mocks.backend.cancelSubscription).not.toHaveBeenCalled();
   });
 
-  it("cancels and keeps a plan, saying who did it, then confirms", async () => {
+  it("cancels and keeps a plan with the staff member's token, then confirms", async () => {
     mocks.backend.cancelSubscription.mockResolvedValueOnce(OK);
     mocks.backend.keepSubscription.mockResolvedValueOnce(OK);
 
     expect(await redirectedTo(cancelSubscriptionAction(form([["clientId", "c-ada"]])))).toBe("/clients/c-ada?done=cancelled");
-    expect(mocks.backend.cancelSubscription).toHaveBeenCalledWith("c-ada", "tunde@ifnotgod.com");
+    expect(mocks.backend.cancelSubscription).toHaveBeenCalledWith("t0ken", "c-ada");
     expect(await redirectedTo(keepSubscriptionAction(form([["clientId", "c-ada"]])))).toBe("/clients/c-ada?done=kept");
   });
 
@@ -74,7 +74,7 @@ describe("subscription actions", () => {
     const sent = form([["clientId", "c-ada"], ["services", "lead-follow-up"], ["services", "daily-brief"]]);
 
     expect(await redirectedTo(updateServicesAction(INITIAL_CHOICE_STATE, sent))).toBe("/clients/c-ada?done=services");
-    expect(mocks.backend.updateServices).toHaveBeenCalledWith("c-ada", ["lead-follow-up", "daily-brief"], "tunde@ifnotgod.com");
+    expect(mocks.backend.updateServices).toHaveBeenCalledWith("t0ken", "c-ada", ["lead-follow-up", "daily-brief"]);
   });
 
   it("shows the backend's reason when services can't be saved, keeping what was ticked", async () => {

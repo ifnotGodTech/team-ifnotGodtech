@@ -6,7 +6,7 @@ import { PlanStatusBadge } from "@/components/clients/PlanStatusBadge";
 import { DataTable } from "@/components/ui/DataTable";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { EmptyState, ErrorState } from "@/components/ui/States";
-import { getBackend } from "@/lib/api";
+import { searchClients } from "@/lib/api/clients";
 import { requireStaff } from "@/lib/auth";
 import { formatShortDate } from "@/shared/format";
 import type { ClientSummary } from "@/types/client";
@@ -33,11 +33,11 @@ const COLUMNS = [
 ];
 
 export default async function ClientsPage({ searchParams }: PageProps<"/clients">) {
-  await requireStaff();
+  const { token } = await requireStaff();
   const { q, page, plan } = await searchParams;
   const query = typeof q === "string" ? q.trim().slice(0, 100) : "";
   const withoutPlan = plan === "none";
-  const result = await getBackend().searchClients({ query, page: Number(page) || 1, withoutPlan });
+  const result = await searchClients(token, { query, page: Number(page) || 1, withoutPlan });
   const total = result.ok ? result.data.total : 0;
   const counted = `${total} ${total === 1 ? "client" : "clients"}${withoutPlan ? " without a plan" : ""}`;
 

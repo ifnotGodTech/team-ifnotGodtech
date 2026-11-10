@@ -14,7 +14,7 @@ export async function logIn(page: Page, next = "/") {
 /** The password step. */
 export async function submitPassword(page: Page, { email = STAFF.email, password = STAFF.password } = {}) {
   await page.getByLabel("Work email").fill(email);
-  await page.getByLabel("Password").fill(password);
+  await page.getByLabel("Password", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Continue" }).click();
 }
 

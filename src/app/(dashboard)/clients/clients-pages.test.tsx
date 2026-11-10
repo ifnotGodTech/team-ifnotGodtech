@@ -7,11 +7,48 @@ const notFound = vi.hoisted(() =>
   })
 );
 vi.mock("next/navigation", () => ({ notFound, redirect: vi.fn() }));
-vi.mock("@/lib/auth", () => ({ requireStaff: async () => ({ staff: { email: "tunde@ifnotgod.com" }, expiresAt: 0 }) }));
+vi.mock("@/lib/auth", () => ({ requireStaff: async () => ({ staff: { email: "tunde@ifnotgod.com" }, token: "t0ken", expiresAt: 0 }) }));
 vi.mock("@/lib/actions/clients", () => ({ sendPasswordResetAction: vi.fn() }));
 vi.mock("@/lib/actions/subscriptions", () => ({ cancelSubscriptionAction: vi.fn(), keepSubscriptionAction: vi.fn() }));
-// The stand-in keeps changes in a cookie; these tests start with none.
+// The catalogue still comes from the stand-in, which keeps changes in a cookie; these tests start with none.
 vi.mock("next/headers", () => ({ cookies: async () => ({ get: () => undefined }) }));
+
+type Summary = { id: string; fullName: string; businessName?: string; email: string; planName: string | null; planStatus: "active" | "cancelled" | "none"; joinedOn: string };
+const ada: Summary = { id: "2", fullName: "Ada Obi", businessName: "Obi Logistics", email: "ada@obilogistics.com", planName: "Growth", planStatus: "active", joinedOn: "2026-10-08" };
+const grace: Summary = { id: "4", fullName: "Grace Okon", businessName: "Okon Events", email: "grace@okonevents.com", planName: "Pro", planStatus: "active", joinedOn: "2026-05-14" };
+const musa: Summary = { id: "6", fullName: "Musa Bello", businessName: "Bello Autos", email: "musa@belloautos.ng", planName: null, planStatus: "none", joinedOn: "2026-11-06" };
+const history = [
+  { id: "3", at: "2026-10-08T09:20:00Z", text: "Subscribed to Growth, monthly", by: "the client" },
+  { id: "1", at: "2026-10-08T09:00:00Z", text: "Signed up", by: "the client" },
+];
+const growth = {
+  planId: "growth",
+  billingPeriod: "monthly",
+  status: "active",
+  currentPeriodEnd: "2026-11-12",
+  reminder: { dueOn: "2026-11-09", sentOn: null },
+  changesLeftThisMonth: 0,
+  setupFeePaidOn: "2026-10-12",
+  serviceIds: ["lead-follow-up"],
+  pendingPlanId: null,
+  payments: [{ id: "9", paidOn: "2026-10-12", description: "Growth, monthly, and setup fee", amount: 140000 }],
+};
+
+const api = vi.hoisted(() => ({ searchClients: vi.fn(), getClient: vi.fn(), getSubscription: vi.fn() }));
+vi.mock("@/lib/api/clients", () => ({ searchClients: api.searchClients, getClient: api.getClient }));
+vi.mock("@/lib/api/subscriptions", () => ({ getSubscription: api.getSubscription }));
+
+api.searchClients.mockImplementation(async (_token: string, { query, withoutPlan }: { query: string; withoutPlan?: boolean }) => {
+  if (query === "nobody") return { ok: true, data: { items: [], total: 0, page: 1, pageSize: 10 } };
+  if (withoutPlan) return { ok: true, data: { items: [musa], total: 3, page: 1, pageSize: 10 } };
+  return { ok: true, data: { items: [ada, grace, musa], total: 13, page: 1, pageSize: 10 } };
+});
+api.getClient.mockImplementation(async (_token: string, id: string) => {
+  if (id === ada.id) return { ok: true, data: { ...ada, signInMethod: "password", history } };
+  if (id === grace.id) return { ok: true, data: { ...grace, signInMethod: "google", history: [] } };
+  return { ok: false, error: { code: "NOT_FOUND", status: 404, message: "", fieldErrors: {} } };
+});
+api.getSubscription.mockImplementation(async (_token: string, id: string) => ({ ok: true, data: id === ada.id ? growth : null }));
 
 import ClientPage from "./[id]/page";
 import ClientsPage from "./page";
@@ -25,7 +62,8 @@ describe("clients list", () => {
     render(await list());
 
     expect(screen.getByRole("status")).toHaveTextContent("13 clients");
-    expect(screen.getByRole("link", { name: "Ada Obi" })).toHaveAttribute("href", "/clients/c-ada");
+    expect(screen.getByRole("link", { name: "Ada Obi" })).toHaveAttribute("href", "/clients/2");
+    expect(api.searchClients).toHaveBeenCalledWith("t0ken", { query: "", page: 1, withoutPlan: false });
     expect(screen.getByRole("navigation", { name: "Pages" })).toHaveTextContent("Page 1 of 2");
   });
 
@@ -55,7 +93,7 @@ describe("clients list", () => {
 
 describe("client details", () => {
   it("shows the account, plan status and history", async () => {
-    render(await details("c-ada"));
+    render(await details("2"));
 
     expect(screen.getByRole("heading", { level: 1, name: "Ada Obi" })).toBeInTheDocument();
     expect(screen.getByText("Obi Logistics · ada@obilogistics.com")).toBeInTheDocument();
@@ -65,14 +103,14 @@ describe("client details", () => {
   });
 
   it("offers a password reset to password clients, behind a confirmation", async () => {
-    render(await details("c-ada"));
+    render(await details("2"));
 
     expect(screen.getByRole("button", { name: "Send a password reset email" })).toBeInTheDocument();
     expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
   });
 
   it("explains why Google clients have no password reset", async () => {
-    render(await details("c-grace"));
+    render(await details("4"));
 
     expect(screen.queryByRole("button", { name: "Send a password reset email" })).not.toBeInTheDocument();
     expect(screen.getByText(/signs in with Google, so there's no password to reset/)).toBeInTheDocument();
@@ -82,7 +120,7 @@ describe("client details", () => {
     ["sent", "Password reset email sent."],
     ["failed", "We couldn't send the password reset email. Please try again."],
   ])("confirms a reset that was %s", async (reset, text) => {
-    render(await details("c-ada", { reset }));
+    render(await details("2", { reset }));
 
     expect(screen.getByRole("status")).toHaveTextContent(text);
   });

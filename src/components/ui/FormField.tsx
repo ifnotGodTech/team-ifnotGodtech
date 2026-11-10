@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { cn } from "@/shared/cn";
+import { PasswordInput } from "./PasswordInput";
 
 export type ControlProps = {
   id: string;
@@ -51,7 +52,15 @@ export function FormField({ id, label, type = "text", autoComplete, required, te
       <label htmlFor={id} className="text-[0.94rem] font-semibold">
         {label}
       </label>
-      {children ? children(props) : textarea ? <textarea {...props} rows={4} /> : <input {...props} type={type} />}
+      {children ? (
+        children(props)
+      ) : textarea ? (
+        <textarea {...props} rows={4} />
+      ) : type === "password" ? (
+        <PasswordInput {...props} />
+      ) : (
+        <input {...props} type={type} />
+      )}
       {hint && (
         <span id={hintId} className="text-[0.88rem] text-text-dim">
           {hint}

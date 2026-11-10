@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { getBackend } from "@/lib/api";
+import * as subscriptions from "@/lib/api/subscriptions";
 import type { ApiResult } from "@/lib/api";
 import { requireStaff } from "@/lib/auth";
 import type { ChoiceFormState } from "./formState";
@@ -34,38 +34,38 @@ function clientIdFrom(form: FormData): string {
 }
 
 export async function cancelSubscriptionAction(form: FormData): Promise<void> {
-  const { staff } = await requireStaff();
+  const { token } = await requireStaff();
   const id = clientIdFrom(form);
-  const result = await call(() => getBackend().cancelSubscription(id, staff.email));
+  const result = await call(() => subscriptions.cancelSubscription(token, id));
   redirect(clientPath(id, result?.ok ? "done=cancelled" : "failed=cancel"));
 }
 
 export async function keepSubscriptionAction(form: FormData): Promise<void> {
-  const { staff } = await requireStaff();
+  const { token } = await requireStaff();
   const id = clientIdFrom(form);
-  const result = await call(() => getBackend().keepSubscription(id, staff.email));
+  const result = await call(() => subscriptions.keepSubscription(token, id));
   redirect(clientPath(id, result?.ok ? "done=kept" : "failed=keep"));
 }
 
 export async function updateServicesAction(_: ChoiceFormState, form: FormData): Promise<ChoiceFormState> {
-  const { staff } = await requireStaff();
+  const { token } = await requireStaff();
   const id = clientIdFrom(form);
   const parsed = serviceIdsSchema.safeParse(form.getAll("services"));
   if (!parsed.success) return { formError: "Some of those services aren't part of this plan.", values: [] };
 
-  const result = await call(() => getBackend().updateServices(id, parsed.data, staff.email));
+  const result = await call(() => subscriptions.updateServices(token, id, parsed.data));
   if (!result) return { formError: UNREACHABLE, values: parsed.data };
   if (!result.ok) return { formError: result.error.message, values: parsed.data };
   redirect(clientPath(id, "done=services"));
 }
 
 export async function changePlanAction(_: ChoiceFormState, form: FormData): Promise<ChoiceFormState> {
-  const { staff } = await requireStaff();
+  const { token } = await requireStaff();
   const id = clientIdFrom(form);
   const plan = planIdSchema.safeParse(form.get("plan"));
   if (!plan.success) return { formError: "Choose a plan.", values: [] };
 
-  const result = await call(() => getBackend().changePlan(id, plan.data, staff.email));
+  const result = await call(() => subscriptions.changePlan(token, id, plan.data));
   if (!result) return { formError: UNREACHABLE, values: [plan.data] };
   if (!result.ok) return { formError: result.error.message, values: [plan.data] };
   redirect(clientPath(id, "done=plan"));

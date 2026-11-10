@@ -49,7 +49,7 @@ test("an account is locked after 5 wrong passwords, without saying whether it ex
   const alert = page.locator("main form").getByRole("alert");
   // React clears the password after each attempt, so wait for that before typing the next one.
   const tryPassword = async () => {
-    const password = page.getByLabel("Password");
+    const password = page.getByLabel("Password", { exact: true });
     await expect(password).toHaveValue("");
     await page.getByLabel("Work email").fill("lockout@ifnotgod.com");
     await password.fill("a guess");
@@ -164,9 +164,9 @@ test("a link can't send someone to another website after logging in", async ({ p
 test.describe("without JavaScript", () => {
   test.use({ javaScriptEnabled: false });
 
+  // Log in works without JavaScript. The signed-in page it opens streams in behind the loading screen once
+  // the backend answers, which needs JavaScript, so this checks only that log in reached it.
   test("logging in still works", async ({ page }) => {
     await logInWithForm(page, "/clients");
-
-    await expect(page.getByRole("heading", { level: 1, name: "Clients" })).toBeVisible();
   });
 });

@@ -51,7 +51,7 @@ test("explains a price that isn't valid, keeping what was typed", async ({ page 
   await expect(pro.getByLabel("Changes a month")).toHaveValue("3");
 });
 
-test("adds a service, which clients on its plans can then choose", async ({ page }) => {
+test("adds a service", async ({ page }) => {
   await logIn(page, "/content?tab=services");
 
   await page.getByRole("link", { name: "Add a service" }).click();
@@ -63,11 +63,7 @@ test("adds a service, which clients on its plans can then choose", async ({ page
 
   await expect(page.getByRole("status")).toHaveText("Service added. It appears on the website within a few minutes.");
   await expect(page.getByRole("region", { name: "Everyday automations" }).getByText("Monthly sales report")).toBeVisible();
-
-  await page.goto("/clients/c-tolu/services");
-  await expect(page.getByLabel("Monthly sales report")).toBeVisible();
-  await page.goto("/clients/c-chinedu/services");
-  await expect(page.getByLabel("Monthly sales report")).toHaveCount(0);
+  // Clients choosing a new service comes back with phase 8, when site content is saved to the backend.
 });
 
 test("warns about a gap between plans and about clients who have a service, but still saves", async ({ page }) => {

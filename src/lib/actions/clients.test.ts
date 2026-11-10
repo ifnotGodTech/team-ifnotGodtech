@@ -11,10 +11,10 @@ vi.mock("next/navigation", () => ({ redirect: mocks.redirect }));
 vi.mock("@/lib/auth", () => ({
   requireStaff: async () => {
     if (!mocks.signedIn) mocks.redirect("/login");
-    return { staff: { id: "s1", name: "Tunde", email: "tunde@ifnotgod.com" }, expiresAt: 0 };
+    return { staff: { id: "s1", name: "Tunde", email: "tunde@ifnotgod.com" }, token: "t0ken", expiresAt: 0 };
   },
 }));
-vi.mock("@/lib/api", () => ({ getBackend: () => ({ sendPasswordReset: mocks.reset }) }));
+vi.mock("@/lib/api/clients", () => ({ sendPasswordReset: mocks.reset }));
 
 import { sendPasswordResetAction } from "./clients";
 
@@ -38,11 +38,11 @@ describe("sendPasswordResetAction", () => {
     expect(mocks.reset).not.toHaveBeenCalled();
   });
 
-  it("sends the email, saying who sent it, and confirms", async () => {
+  it("sends the email with the staff member's token, and confirms", async () => {
     mocks.reset.mockResolvedValueOnce({ ok: true, data: null });
 
     expect(await redirectedTo(sendPasswordResetAction(form({ clientId: "c-ada" })))).toBe("/clients/c-ada?reset=sent");
-    expect(mocks.reset).toHaveBeenCalledWith("c-ada", "tunde@ifnotgod.com");
+    expect(mocks.reset).toHaveBeenCalledWith("t0ken", "c-ada");
   });
 
   it("says when the email couldn't be sent", async () => {

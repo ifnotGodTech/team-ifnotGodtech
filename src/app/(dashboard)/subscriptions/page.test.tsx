@@ -1,21 +1,35 @@
 import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-const mocks = vi.hoisted(() => ({ failing: false }));
-vi.mock("@/lib/auth", () => ({ requireStaff: async () => ({ staff: { email: "tunde@ifnotgod.com" }, expiresAt: 0 }) }));
-vi.mock("next/headers", () => ({ cookies: async () => ({ get: () => undefined }) }));
-vi.mock("@/lib/api", async (original) => {
-  const real = await original<typeof import("@/lib/api")>();
-  return {
-    ...real,
-    getBackend: () => {
-      const backend = real.getBackend();
-      return mocks.failing
-        ? { ...backend, listSubscriptions: async () => ({ ok: false, error: { code: "UNAVAILABLE", message: "The dashboard can't reach the server right now." } }) }
-        : backend;
-    },
-  };
+const mocks = vi.hoisted(() => ({ failing: false, listSubscriptions: vi.fn() }));
+vi.mock("@/lib/auth", () => ({ requireStaff: async () => ({ staff: { email: "tunde@ifnotgod.com" }, token: "t0ken", expiresAt: 0 }) }));
+vi.mock("@/lib/api/subscriptions", () => ({ listSubscriptions: mocks.listSubscriptions }));
+
+const row = (clientName: string, extra: Record<string, unknown> = {}) => ({
+  clientId: clientName.split(" ")[0].toLowerCase(),
+  clientName,
+  planName: "Growth",
+  pendingPlanName: null,
+  billingPeriod: "monthly",
+  status: "active",
+  currentPeriodEnd: "2026-11-13",
+  servicesChosen: 6,
+  servicesIncluded: 6,
+  ...extra,
 });
+const counts = { all: 10, active: 8, renewing: 4, cancelled: 2 };
+const rows = {
+  all: [row("Ifeoma Nwosu", { pendingPlanName: "Pro", billingPeriod: "twelve-months" }), row("Tolu Bakare", { servicesChosen: 4 })],
+  cancelled: [
+    row("Kunle Ade", { planName: "Starter", status: "cancelled", servicesIncluded: 2, servicesChosen: 0 }),
+    row("Funmi Adeyemi", { planName: "Pro", status: "cancelled", servicesIncluded: 12, servicesChosen: 12 }),
+  ],
+};
+mocks.listSubscriptions.mockImplementation(async (_token: string, filter: "all" | "cancelled") =>
+  mocks.failing
+    ? { ok: false, error: { code: "UNAVAILABLE", message: "The dashboard can't reach the server right now." } }
+    : { ok: true, data: { items: rows[filter] ?? rows.all, counts } }
+);
 
 import SubscriptionsPage from "./page";
 
