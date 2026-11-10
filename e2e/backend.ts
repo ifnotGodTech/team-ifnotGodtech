@@ -10,12 +10,17 @@ export const OUTBOX_DIR = path.join(BACKEND_DIR, ".outbox-e2e");
 /** Where the test backend writes its seeded clients' ids, by first name (see seed_e2e_dashboard). */
 export const SEED_IDS_FILE = path.join(OUTBOX_DIR, "..", ".e2e-dashboard-ids.json");
 
-/** A seeded client's page, such as clientPath("ada", "/services") for /clients/2/services. */
-export function clientPath(name: string, rest = ""): string {
+const seededId = (key: string) => {
   const ids = JSON.parse(readFileSync(SEED_IDS_FILE, "utf8")) as Record<string, number>;
-  if (!ids[name]) throw new Error(`No seeded client called ${name}`);
-  return `/clients/${ids[name]}${rest}`;
-}
+  if (!ids[key]) throw new Error(`Nothing seeded as ${key}`);
+  return ids[key];
+};
+
+/** A seeded client's page, such as clientPath("ada", "/services") for /clients/2/services. */
+export const clientPath = (name: string, rest = "") => `/clients/${seededId(name)}${rest}`;
+
+/** A seeded lead's page, by first name, such as leadPath("kemi"). */
+export const leadPath = (name: string) => `/leads/${seededId(`lead-${name}`)}`;
 
 /** The signed-in session saved by staff.setup.ts. */
 export const STAFF_STATE = path.join(__dirname, ".auth", "staff.json");

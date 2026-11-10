@@ -10,6 +10,7 @@ export const NAV_ITEMS = [
   { href: "/", label: "Overview" },
   { href: "/clients", label: "Clients" },
   { href: "/subscriptions", label: "Subscriptions" },
+  { href: "/leads", label: "Leads" },
   { href: "/content", label: "Site content" },
 ] as const;
 
@@ -17,7 +18,8 @@ export function isCurrent(pathname: string, href: string): boolean {
   return href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function Sidebar({ staffEmail }: { staffEmail: string }) {
+/** `newLeads`: audit requests nobody has followed up yet, shown beside Leads. */
+export function Sidebar({ staffEmail, newLeads = 0 }: { staffEmail: string; newLeads?: number }) {
   const pathname = usePathname();
 
   // Full height only beside the content (from 800px wide). Stacked on a phone, it stays compact.
@@ -30,7 +32,8 @@ export function Sidebar({ staffEmail }: { staffEmail: string }) {
           <span className="text-[0.75rem] text-on-ink-dim">Team dashboard</span>
         </span>
       </Link>
-      <nav aria-label="Dashboard" className="flex flex-col gap-1 font-semibold">
+      {/* Side by side and wrapping when stacked above the page (narrower than 800px), so the menu stays compact. */}
+      <nav aria-label="Dashboard" className="flex flex-wrap gap-1 font-semibold min-[800px]:flex-col">
         {NAV_ITEMS.map((item) => {
           const current = isCurrent(pathname, item.href);
           return (
@@ -38,9 +41,18 @@ export function Sidebar({ staffEmail }: { staffEmail: string }) {
               key={item.href}
               href={item.href}
               aria-current={current ? "page" : undefined}
-              className={cn("rounded-md px-3 py-2.5", current ? "bg-maroon text-white" : "text-on-ink-dim hover:bg-ink-line hover:text-paper")}
+              className={cn(
+                "flex items-center justify-between gap-2 rounded-md px-3 py-2.5",
+                current ? "bg-maroon text-white" : "text-on-ink-dim hover:bg-ink-line hover:text-paper"
+              )}
             >
               {item.label}
+              {item.href === "/leads" && newLeads > 0 && (
+                <>
+                  {/* Read as "Leads 3 new". */}{" "}
+                  <span className="rounded-full bg-paper px-2 text-[0.75rem] font-bold text-maroon">{newLeads} new</span>
+                </>
+              )}
             </Link>
           );
         })}

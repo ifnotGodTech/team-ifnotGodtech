@@ -21,6 +21,8 @@
   --color-warning-bg: #fff4e8;
   --color-warning: #7a3d0c;
   --color-neutral-bg: #ece2dc;
+  /* A new lead waiting for the team: maroon on a pale maroon, readable at AA. */
+  --color-attention-bg: #fbe9ec;
 
   color-scheme: light;
 }
@@ -46,6 +48,7 @@
   --color-warning-bg: var(--color-warning-bg);
   --color-warning: var(--color-warning);
   --color-neutral-bg: var(--color-neutral-bg);
+  --color-attention-bg: var(--color-attention-bg);
 
   --font-display: var(--font-manrope);
   --font-body: var(--font-public-sans);

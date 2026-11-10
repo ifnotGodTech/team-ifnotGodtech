@@ -13,7 +13,7 @@ The dashboard stores no data of its own. Everything it shows or changes goes thr
 - **Users:** find a client, see their details and how they sign in, and help with access problems.
 - **Subscriptions:** see each client's plan, status, renewal date, chosen services, changes left this month and payments. Make changes on a client's behalf, such as cancelling, keeping a cancelled plan or swapping services, under the same rules clients follow on `WEB`.
 - **Site content:** plans, prices, services (including taking a service off the site with its `available` flag) and site text. `WEB` shows saved changes after its cached pages refresh.
-- **Leads:** audit requests from the website, once lead capture moves to the backend.
+- **Leads:** audit requests from the website: who asked, their problem, and whether the team has got back to them.
 
 ## Engineering Standards
 - Use TypeScript for all code in this project.
@@ -29,9 +29,9 @@ The dashboard stores no data of its own. Everything it shows or changes goes thr
 
 ## Folder Structure
 - `src/app/(auth)` (log in and log out, with no dashboard navigation)
-- `src/app/(dashboard)` (every signed-in page, behind one layout with the navigation; one folder per area: `users`, `subscriptions`, `content`, and later `leads`)
+- `src/app/(dashboard)` (every signed-in page, behind one layout with the navigation; one folder per area: `clients`, `subscriptions`, `leads`, `content`)
 - `src/components` (screens and their parts, grouped by area, plus shared `ui` primitives: buttons, inputs, tables, badges, confirm dialogs, and `forms` helpers that keep what was typed when a save fails)
-- `src/lib/api` (the only route to the backend: one client, typed responses, failures turned into normalized errors; one module per area: `staffAuth.ts`, `clients.ts`, `subscriptions.ts`, `overview.ts` and `content.ts`)
+- `src/lib/api` (the only route to the backend: one client, typed responses, failures turned into normalized errors; one module per area: `staffAuth.ts`, `clients.ts`, `subscriptions.ts`, `overview.ts`, `leads.ts` and `content.ts`)
 - `src/lib/auth` (the encrypted staff session cookie, log in actions, and the one place where access is checked, confirming the token with the backend)
 - `src/lib/actions` (server actions that change data, each checking the session itself)
 - `src/lib/loaders` (data loading shared by several pages)

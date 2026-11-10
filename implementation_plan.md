@@ -133,7 +133,7 @@ Needs `backend`. One vertical slice at a time, following `backend/implementation
 
 ## Later, not in this plan
 
-- **Leads:** audit requests from the website, once lead capture moves to the backend.
+- [x] **Leads:** audit requests from the website (backend phase 9, 11 November 2026), from the approved mock.
 - **Authenticator app codes** in place of email codes, which are safer if a staff email account is ever compromised.
 - **Roles and permissions,** such as view-only staff or content-only editors, added in `src/lib/auth`.
 - **Managing staff accounts** from the dashboard.

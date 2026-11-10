@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
 }));
 vi.mock("next/navigation", () => ({ notFound: mocks.notFound, usePathname: () => "/" }));
 vi.mock("@/lib/auth", () => ({ requireStaff: mocks.requireStaff }));
+vi.mock("@/lib/api/leads", () => ({ listLeads: async () => ({ ok: true, data: { items: [], total: 2, page: 1, pageSize: 1, counts: { all: 5, new: 2, contacted: 2, closed: 1 } } }) }));
 vi.mock("@/lib/auth/actions", () => ({ keepAliveAction: vi.fn(), logOutAction: vi.fn() }));
 
 import DashboardLayout from "./layout";

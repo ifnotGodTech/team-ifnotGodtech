@@ -11,7 +11,15 @@ describe("Sidebar", () => {
   it("links to every area", () => {
     render(<Sidebar staffEmail="tunde@ifnotgod.com" />);
 
-    expect(screen.getAllByRole("link").map((link) => link.getAttribute("href"))).toEqual(["/", "/", "/clients", "/subscriptions", "/content"]);
+    expect(screen.getAllByRole("link").map((link) => link.getAttribute("href"))).toEqual(["/", "/", "/clients", "/subscriptions", "/leads", "/content"]);
+  });
+
+  it("shows how many leads are new, and nothing when none are", () => {
+    const { rerender } = render(<Sidebar staffEmail="tunde@ifnotgod.com" newLeads={3} />);
+    expect(screen.getByRole("link", { name: "Leads 3 new" })).toHaveAttribute("href", "/leads");
+
+    rerender(<Sidebar staffEmail="tunde@ifnotgod.com" newLeads={0} />);
+    expect(screen.getByRole("link", { name: "Leads" })).toBeInTheDocument();
   });
 
   it("shows who is signed in, with Log out", () => {
