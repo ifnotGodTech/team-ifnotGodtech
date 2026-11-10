@@ -23,6 +23,7 @@ const subscriptionSchema: z.ZodType<ClientSubscription> = z.object({
   serviceIds: z.array(z.string()),
   pendingPlanId: z.enum(PLAN_IDS).nullable(),
   payments: z.array(z.object({ id: z.string(), paidOn: z.string(), description: z.string(), amount: z.number() })),
+  paymentDue: z.object({ amount: z.number().nullable(), workingUntil: z.string(), payUrl: z.string().nullable() }).nullable(),
 });
 const clientSubscriptionSchema = z.object({ subscription: subscriptionSchema.nullable() }).transform((body) => body.subscription);
 const listSchema: z.ZodType<SubscriptionList> = z.object({

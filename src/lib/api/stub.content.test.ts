@@ -5,7 +5,7 @@ import { STUB_SITE_TEXT } from "./stubCatalogue";
 import { memoryStubStore } from "./stubStore";
 
 const STAFF = "tunde@ifnotgod.com";
-const fresh = () => createStubBackend(() => Date.parse("2026-11-08T10:00:00Z"), memoryStubStore());
+const fresh = () => createStubBackend(memoryStubStore());
 const catalogueOf = async (backend: ReturnType<typeof fresh>) => {
   const result = await backend.getCatalogue();
   if (!result.ok) throw new Error("Expected a catalogue");

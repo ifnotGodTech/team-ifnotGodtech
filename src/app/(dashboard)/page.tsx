@@ -6,7 +6,7 @@ import { StatCard } from "@/components/overview/StatCard";
 import { ButtonLink } from "@/components/ui/Button";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { ErrorState } from "@/components/ui/States";
-import { getBackend } from "@/lib/api";
+import { getOverview } from "@/lib/api/overview";
 import { requireStaff } from "@/lib/auth";
 import { formatNaira, formatShortDate, formatWeekdayDate } from "@/shared/format";
 import { RENEWING_SOON_DAYS } from "@/shared/subscriptions";
@@ -16,8 +16,8 @@ export const metadata: Metadata = { title: "Overview" };
 const today = () => new Date().toISOString();
 
 export default async function OverviewPage() {
-  await requireStaff();
-  const result = await getBackend().getOverview();
+  const { token } = await requireStaff();
+  const result = await getOverview(token);
   const header = (
     <PageHeader
       title="Overview"

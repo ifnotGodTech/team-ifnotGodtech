@@ -102,6 +102,18 @@ describe("client details", () => {
     expect(within(history).getAllByRole("listitem")[0]).toHaveTextContent("Subscribed to Growth, monthly");
   });
 
+  it("says when a renewal hasn't been paid, and until when the plan keeps working", async () => {
+    api.getSubscription.mockResolvedValueOnce({
+      ok: true,
+      data: { ...growth, paymentDue: { amount: 40000, workingUntil: "2026-11-14", payUrl: null } },
+    });
+
+    render(await details("2"));
+
+    expect(screen.getByRole("note")).toHaveTextContent("Renewal payment not received yet. ₦40,000 is due.");
+    expect(screen.getByRole("note")).toHaveTextContent("Everything keeps working until 14 November 2026");
+  });
+
   it("offers a password reset to password clients, behind a confirmation", async () => {
     render(await details("2"));
 

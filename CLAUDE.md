@@ -31,7 +31,7 @@ The dashboard stores no data of its own. Everything it shows or changes goes thr
 - `src/app/(auth)` (log in and log out, with no dashboard navigation)
 - `src/app/(dashboard)` (every signed-in page, behind one layout with the navigation; one folder per area: `users`, `subscriptions`, `content`, and later `leads`)
 - `src/components` (screens and their parts, grouped by area, plus shared `ui` primitives: buttons, inputs, tables, badges, confirm dialogs, and `forms` helpers that keep what was typed when a save fails)
-- `src/lib/api` (the only route to the backend: one client, typed responses, failures turned into normalized errors; `staffAuth.ts`, `clients.ts` and `subscriptions.ts` on the real API, and the stand-in for the overview and site content until their phases)
+- `src/lib/api` (the only route to the backend: one client, typed responses, failures turned into normalized errors; `staffAuth.ts`, `clients.ts`, `subscriptions.ts` and `overview.ts` on the real API, and the stand-in for site content until backend phase 8)
 - `src/lib/auth` (the encrypted staff session cookie, log in actions, and the one place where access is checked, confirming the token with the backend)
 - `src/lib/actions` (server actions that change data, each checking the session itself)
 - `src/lib/loaders` (data loading shared by several pages)

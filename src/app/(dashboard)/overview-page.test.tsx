@@ -4,7 +4,7 @@ import type { Overview } from "@/types/overview";
 
 const mocks = vi.hoisted(() => ({ result: null as unknown }));
 vi.mock("@/lib/auth", () => ({ requireStaff: async () => ({ staff: { email: "tunde@ifnotgod.com" }, expiresAt: 0 }) }));
-vi.mock("@/lib/api", () => ({ getBackend: () => ({ getOverview: async () => mocks.result }) }));
+vi.mock("@/lib/api/overview", () => ({ getOverview: async () => mocks.result }));
 
 import OverviewPage from "./page";
 

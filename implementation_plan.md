@@ -115,7 +115,7 @@ Needs `backend`. One vertical slice at a time, following `backend/implementation
 - [x] Staff log in, sessions and emailed codes (backend phase 3, 9 November 2026). The session cookie is now encrypted and holds the backend's token. Every page confirms it with the backend, and log out revokes it, so the logged-out marker from phase 6 is gone. The stand-in's log in is removed. Browser tests run against a real backend started by `backend/scripts/serve_for_e2e.sh`, and read codes from its email files. Signed-in pages need JavaScript: they stream in behind the loading screen once the backend confirms the session. Log in still works without it.
 - [x] Clients, with subscriptions (backend phases 5 and 6, 10 November 2026).
 - [x] Subscriptions, including actions on a client's behalf. Browser tests run one at a time against a backend seeded with the stand-in's clients and plans.
-- [ ] Overview figures.
+- [x] Overview figures (backend phase 7, 10 November 2026).
 - [ ] Site content. With `WEB`: switch its `src/lib/catalogue` from the content files to the API, with cached pages that refresh after a save and keep the last good version if the API is down. `WEB` then lists each plan's lines and services from the data, with services naming the plans that include them instead of a lowest plan, and shows new service groups.
 - [ ] Remove the stand-in, and the "not found on the live site" guard.
 - [ ] Tests: each function against the real API's responses, including its errors.

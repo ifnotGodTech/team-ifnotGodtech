@@ -37,6 +37,15 @@ export function SubscriptionPanel({ clientId, clientName, subscription, catalogu
 
   return (
     <>
+      {subscription.paymentDue && (
+        <p role="note" className="rounded-[10px] border border-orange bg-warning-bg px-5 py-4">
+          <strong>Renewal payment not received yet.</strong>{" "}
+          {subscription.paymentDue.amount !== null && `${formatNaira(subscription.paymentDue.amount)} is due. `}
+          The client has been emailed a link to pay. Everything keeps working until{" "}
+          {formatLongDate(subscription.paymentDue.workingUntil)}; if it&apos;s still unpaid, the plan ends.
+        </p>
+      )}
+
       {status === "cancelled" && (
         <div className="flex flex-wrap items-center justify-between gap-x-5 gap-y-3 rounded-[10px] border border-orange bg-warning-bg px-5 py-4">
           <p>

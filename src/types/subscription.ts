@@ -32,6 +32,8 @@ export type ClientSubscription = {
   pendingPlanId: PlanId | null;
   /** Newest first. Never includes card details. */
   payments: Payment[];
+  /** A renewal that hasn't been paid yet, while the plan keeps working for a few days. */
+  paymentDue?: { amount: number | null; workingUntil: string; payUrl: string | null } | null;
 };
 
 export type SubscriptionFilter = "all" | "active" | "renewing" | "cancelled";

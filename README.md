@@ -44,8 +44,7 @@ because they share that data. They need PostgreSQL running and the backend repo 
 
 ## The stand-in backend
 
-Staff log in, clients and subscriptions use the real backend. The overview and site content still use a stand-in
-with made-up data until their backend phases are built. The stand-in refuses to run on the live site, where every page returns "not
+Everything uses the real backend except site content, which keeps a stand-in until backend phase 8. The stand-in refuses to run on the live site, where every page returns "not
 found". Previews and local runs work as normal.
 
 The example clients and subscriptions are made up. Renewal dates are counted from today, so "Renewing in 7 days" always has something to show.

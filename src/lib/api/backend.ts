@@ -1,13 +1,9 @@
 import type { Catalogue, GroupDraft, Plan, PlanId, PlanUpdate, Service, ServiceDraft, ServiceGroup, SiteText } from "@/types/catalogue";
-import type { Overview } from "@/types/overview";
 import type { ApiResult } from "./errors";
 
 /** What the screens need from the backend that isn't built yet. The stand-in provides it until each
  * part moves to the real API. Staff log in already has: see staffAuth.ts. */
 export type DashboardBackend = {
-  /** Counts, upcoming renewals and recent changes for the overview page. */
-  getOverview(): Promise<ApiResult<Overview>>;
-
   /** Plans and services, as the website shows them. */
   getCatalogue(): Promise<ApiResult<Catalogue>>;
 

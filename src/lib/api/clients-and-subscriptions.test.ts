@@ -22,6 +22,7 @@ const subscription = {
   serviceIds: [],
   pendingPlanId: null,
   payments: [],
+  paymentDue: null,
 };
 
 describe("clients and subscriptions API", () => {
