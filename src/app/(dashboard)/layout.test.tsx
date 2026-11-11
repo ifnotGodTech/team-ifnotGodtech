@@ -24,6 +24,15 @@ describe("dashboard layout", () => {
     await expect(DashboardLayout(props)).rejects.toThrow("NOT_FOUND");
   });
 
+  it("opens on the live site once it's switched on", async () => {
+    vi.stubEnv("VERCEL_ENV", "production");
+    vi.stubEnv("DASHBOARD_LIVE", "true");
+
+    await DashboardLayout(props);
+
+    expect(mocks.requireStaff).toHaveBeenCalled();
+  });
+
   it("checks the staff session before showing anything", async () => {
     vi.stubEnv("VERCEL_ENV", "preview");
 

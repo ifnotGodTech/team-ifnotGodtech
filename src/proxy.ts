@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { hiddenOnLiveSite } from "@/lib/live";
 import { loginPath, safeNextPath } from "@/lib/auth/paths";
 import { checkSession, encodeSession, SESSION_COOKIE, sessionCookieOptions } from "@/lib/auth/session";
 import { cookieSecret } from "@/lib/auth/signing";
@@ -7,8 +8,8 @@ import { cookieSecret } from "@/lib/auth/signing";
 // visitors to log in, remembering where they were going. It doesn't call the backend: pages and
 // form actions confirm the token themselves through requireStaff. This is a convenience, not the guard.
 export function proxy(request: NextRequest) {
-  // Nothing is reachable on the live site until the real backend is connected.
-  if (process.env.VERCEL_ENV === "production") return NextResponse.next();
+  // Nothing is reachable on the live site until it's switched on (src/lib/live.ts).
+  if (hiddenOnLiveSite()) return NextResponse.next();
 
   const { pathname, search } = request.nextUrl;
   if (pathname.startsWith("/login")) return NextResponse.next();

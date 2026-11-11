@@ -44,5 +44,5 @@ because they share that data. They need PostgreSQL running and the backend repo 
 
 ## The live site
 
-Every screen uses the real backend. Until launch (backend phase 10), every page returns "not found" on the
-live site. Previews and local runs work as normal.
+Every screen uses the real backend. On the live site every page returns "not found" until `DASHBOARD_LIVE` is
+`true` in Vercel's production environment (see `src/lib/live.ts`). Previews and local runs always work.

@@ -1,9 +1,10 @@
 import Image from "next/image";
 import { notFound } from "next/navigation";
+import { hiddenOnLiveSite } from "@/lib/live";
 
 export default function AuthLayout({ children }: LayoutProps<"/">) {
-  // Nothing is reachable on the live site until every screen uses the real backend.
-  if (process.env.VERCEL_ENV === "production") notFound();
+  // Nothing is reachable on the live site until it's switched on (src/lib/live.ts).
+  if (hiddenOnLiveSite()) notFound();
 
   return (
     <main className="on-ink flex min-h-screen items-center justify-center bg-ink px-4 py-12 text-paper">
