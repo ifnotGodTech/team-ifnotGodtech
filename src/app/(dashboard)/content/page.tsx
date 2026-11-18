@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { BillingTermsForm } from "@/components/content/BillingTermsForm";
 import { ContentTabs, isContentTab, type ContentTab } from "@/components/content/ContentTabs";
 import { GroupForm } from "@/components/content/GroupForm";
 import { PlanCard } from "@/components/content/PlanCard";
@@ -11,7 +12,7 @@ import { ButtonLink } from "@/components/ui/Button";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { ErrorState } from "@/components/ui/States";
 import { getCatalogue, getSiteText } from "@/lib/api/content";
-import { saveGroupAction, savePlanAction, saveServiceAction, saveSiteTextAction } from "@/lib/actions/content";
+import { saveBillingTermsAction, saveGroupAction, savePlanAction, saveServiceAction, saveSiteTextAction } from "@/lib/actions/content";
 import { requireStaff } from "@/lib/auth";
 import { WHEN_LIVE } from "@/shared/content";
 import { cn } from "@/shared/cn";
@@ -114,6 +115,16 @@ export default async function SiteContentPage({ searchParams }: PageProps<"/cont
             return <GroupForm key={group.id} action={saveGroupAction} group={group} summary={`${count} ${count === 1 ? "service" : "services"} · ${included}`} />;
           })}
         </div>
+      </>
+    );
+  }
+
+  if (tab === "billing") {
+    return (
+      <>
+        {header}
+        <p className="max-w-2xl text-text-dim">One setup fee and one set of upfront offers for every plan. The pricing page and checkout show them.</p>
+        <BillingTermsForm action={saveBillingTermsAction} terms={catalogue.data.billingTerms} />
       </>
     );
   }

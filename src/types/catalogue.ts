@@ -47,6 +47,15 @@ export type Catalogue = {
   plans: Plan[];
   groups: ServiceGroup[];
   services: Service[];
+  billingTerms: BillingTerms;
+};
+
+/** The setup fee and upfront offers, in naira. One set for every plan. */
+export type BillingTerms = {
+  setupFee: number;
+  /** Paying this many months upfront waives the setup fee. */
+  setupFeeWaivedFromMonths: 6 | 12;
+  freeMonthsOnTwelve: number;
 };
 
 export type SiteText = {

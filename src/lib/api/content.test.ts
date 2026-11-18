@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { getCatalogue, savePlan, saveService, setServiceShown, saveGroup, saveSiteText } from "./content";
+import { getCatalogue, saveBillingTerms, savePlan, saveService, setServiceShown, saveGroup, saveSiteText } from "./content";
 
 vi.mock("next/headers", () => ({ headers: async () => new Headers() }));
 
@@ -11,6 +11,7 @@ const sent = (n = 0) => {
 };
 const plan = { id: "growth", name: "Growth", monthlyPrice: 45000, monthlyChanges: 1, allowances: { everyday: 3, agents: "agreed" }, lines: ["Landing page"], recommended: true, tag: "extra fields are ignored" };
 const service = { id: "monthly-sales-report", group: "everyday", name: "Monthly sales report", problem: "I never know how sales went.", plans: ["growth", "pro", "custom"], available: true, catchAll: false };
+const terms = { setupFee: 100_000, setupFeeWaivedFromMonths: 6, freeMonthsOnTwelve: 2 };
 const group = { id: "websites", name: "Websites", unitSingular: "website", unitPlural: "websites" };
 
 describe("site content API", () => {
@@ -28,11 +29,14 @@ describe("site content API", () => {
   });
 
   it("reads the whole catalogue, listing only priced plans on each service", async () => {
-    fetchMock.mockResolvedValueOnce(json(200, { plans: [plan], groups: [group], services: [service], billingTerms: {} }));
+    fetchMock.mockResolvedValueOnce(json(200, { plans: [plan], groups: [group], services: [service], billingTerms: terms }));
 
     const result = await getCatalogue("t0ken");
 
-    expect(result).toMatchObject({ ok: true, data: { plans: [{ id: "growth", allowances: { agents: "agreed" } }], services: [{ plans: ["growth", "pro"] }] } });
+    expect(result).toMatchObject({
+      ok: true,
+      data: { plans: [{ id: "growth", allowances: { agents: "agreed" } }], services: [{ plans: ["growth", "pro"] }], billingTerms: terms },
+    });
     expect(sent()).toMatchObject({ url: "https://api.example.com/api/v1/staff/catalogue/", headers: { authorization: "Bearer t0ken" } });
   });
 
@@ -60,6 +64,15 @@ describe("site content API", () => {
     expect(sent(3)).toMatchObject({ url: "https://api.example.com/api/v1/staff/catalogue/services/monthly-sales-report/shown/", body: { shown: false } });
     expect(sent(4)).toMatchObject({ url: "https://api.example.com/api/v1/staff/catalogue/groups/", method: "POST" });
     expect(sent(5)).toMatchObject({ url: "https://api.example.com/api/v1/staff/site-text/", method: "PUT" });
+  });
+
+  it("saves the setup fee and offers, and refuses a reply in another shape", async () => {
+    const lower = { setupFee: 50_000, setupFeeWaivedFromMonths: 12 as const, freeMonthsOnTwelve: 1 };
+    fetchMock.mockResolvedValueOnce(json(200, lower)).mockResolvedValueOnce(json(200, { ...lower, setupFeeWaivedFromMonths: 9 }));
+
+    expect(await saveBillingTerms("t0ken", lower)).toEqual({ ok: true, data: lower });
+    expect(sent(0)).toMatchObject({ url: "https://api.example.com/api/v1/staff/billing-terms/", method: "PUT", body: lower, headers: { authorization: "Bearer t0ken" } });
+    expect(await saveBillingTerms("t0ken", lower)).toMatchObject({ ok: false, error: { code: "UNEXPECTED" } });
   });
 
   it("passes on a refused field, such as a name that's taken", async () => {

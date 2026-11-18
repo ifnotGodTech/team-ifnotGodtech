@@ -10,6 +10,11 @@ export const WHEN_LIVE = "It appears on the website within a few minutes.";
 export const HIDE_RULE =
   "New clients won't see or choose it. It keeps running for clients who already have it, until we let them know and move them on.";
 
+export const BILLING_RULE =
+  "Changes apply to the next checkout. Clients who have already paid a setup fee never pay it again. A change to the free months applies to 12-month renewals from their next renewal, and their renewal reminder shows the amount.";
+export const MAX_SETUP_FEE = 10_000_000;
+export const MAX_FREE_MONTHS = 11;
+
 export const MAX_PLAN_LINES = 8;
 export const PRICED_PLANS: readonly PlanId[] = ["starter", "growth", "pro"];
 
@@ -67,6 +72,18 @@ export const groupSchema = z.object({
   name: text("a name", 2, 40),
   unitSingular: text("the word for one", 2, 40),
   unitPlural: text("the word for several", 2, 40),
+});
+
+export const billingTermsSchema = z.object({
+  setupFee: z
+    .string()
+    .trim()
+    .transform((value) => value.replace(/[,\s₦]/g, ""))
+    .pipe(z.string().regex(/^\d+$/, "Enter the setup fee in whole naira, such as 100,000, or 0 for none."))
+    .transform(Number)
+    .pipe(z.number().max(MAX_SETUP_FEE, `The setup fee must be ₦${MAX_SETUP_FEE.toLocaleString("en-NG")} or less.`)),
+  setupFeeWaivedFromMonths: z.enum(["6", "12"], { message: "Choose 6 or 12 months." }).transform((value) => (value === "6" ? 6 : 12) as 6 | 12),
+  freeMonthsOnTwelve: count("free months", MAX_FREE_MONTHS),
 });
 
 export const siteTextSchema = z.object({
