@@ -144,6 +144,39 @@ test("saves the site text, explaining text that's too short", async ({ page }) =
   await expect(page.getByLabel("Home page headline")).toHaveValue("Every problem has a tech solution.");
 });
 
+test("changes the setup fee and offers, explaining values outside the rules, and records it", async ({ page }) => {
+  await logIn(page, "/content?tab=billing");
+  const form = page.getByRole("form", { name: "Setup fee and offers" });
+
+  await form.getByLabel("Months free when paying 12 months upfront").fill("12");
+  await form.getByRole("button", { name: "Save setup fee and offers" }).click();
+  await expect(form.getByText("Free months can be at most 11.")).toBeVisible();
+
+  await form.getByLabel("Setup fee (₦)").fill("50,000");
+  await form.getByLabel("No setup fee when paying upfront for").selectOption("12");
+  await form.getByLabel("Months free when paying 12 months upfront").fill("1");
+  await form.getByRole("button", { name: "Save setup fee and offers" }).click();
+  await expect(form.getByRole("status")).toHaveText("Saved. The next checkout has a setup fee of ₦50,000. It appears on the website within a few minutes.");
+
+  await page.reload();
+  const saved = page.getByRole("form", { name: "Setup fee and offers" });
+  await expect(saved.getByLabel("Setup fee (₦)")).toHaveValue("50,000");
+  await expect(saved.getByLabel("No setup fee when paying upfront for")).toHaveValue("12");
+  await expect(saved.getByLabel("Months free when paying 12 months upfront")).toHaveValue("1");
+
+  await page.goto("/");
+  await expect(page.getByText("Changed the billing terms: setup fee from ₦100,000 to ₦50,000; setup fee waived from 6 to 12 months upfront; free months on 12 months from 2 to 1").first()).toBeVisible();
+
+  // Back to today's terms, for the tests after this one.
+  await page.goto("/content?tab=billing");
+  const reset = page.getByRole("form", { name: "Setup fee and offers" });
+  await reset.getByLabel("Setup fee (₦)").fill("100,000");
+  await reset.getByLabel("No setup fee when paying upfront for").selectOption("6");
+  await reset.getByLabel("Months free when paying 12 months upfront").fill("2");
+  await reset.getByRole("button", { name: "Save setup fee and offers" }).click();
+  await expect(reset.getByRole("status")).toContainText("Saved.");
+});
+
 for (const [label, width] of [
   ["phone", 375],
   ["tablet", 768],
@@ -153,7 +186,7 @@ for (const [label, width] of [
     await page.setViewportSize({ width, height: 800 });
     await logIn(page, "/content");
 
-    for (const path of ["/content", "/content?tab=services", "/content?tab=services&edit=new", "/content?tab=groups&edit=new", "/content?tab=text"]) {
+    for (const path of ["/content", "/content?tab=services", "/content?tab=services&edit=new", "/content?tab=groups&edit=new", "/content?tab=billing", "/content?tab=text"]) {
       await page.goto(path);
       await expect(page.getByRole("heading", { level: 1, name: "Site content" })).toBeVisible();
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), path).toBe(true);
