@@ -4,12 +4,13 @@ Builds `dashboard`, the IFNOTGOD TECH team's internal tool, from the approved [d
 
 **Architecture:** a Next.js app with TypeScript, used only by our team. It stores no data: everything goes through the Django `backend` API, which owns data, login and the rules. The screens are built first, against a stand-in backend in `src/lib/api`, as `WEB` did for its account screens. When the backend starts, each screen is connected to the real API in vertical slices (phase 7), without changing the screens.
 
-**Status:** phase 1 is built and tested, not yet committed. Phase 2 is next. Tick items only after they're confirmed working.
+**Status:** phases 1 to 5 are pushed. Phase 6 is built and tested on `feat/site-content`, not yet committed. Phase 7 needs the backend. Tick items only after they're confirmed working.
 
 ## Decided
 
-- [x] **Repo:** its own private repo, separate from the public `WEB` repo (8 November 2026).
-- [x] **Address:** `team.ifnotgod.com`, on the same domain as the API so the login cookie works on both (8 November 2026).
+- [x] **Repo:** its own repo, `ifnotGodTech/team-ifnotGodtech`, separate from `WEB` (8 November 2026). It's currently public, not private as first planned. Revisit before real client data or backend details go in.
+- [x] **Address:** `team.ifnotgod.com` (8 November 2026).
+- [x] **Sessions with the backend** (8 November 2026): the dashboard's server calls the API with its own app key. The API returns a token after the emailed code, which the dashboard keeps inside its own secure cookie. Log out revokes it. See `backend/CLAUDE.md`.
 - [x] **Hosting:** Vercel, like `WEB` (8 November 2026).
 - [x] **Staff sessions:** a secure cookie the browser's scripts can't read, ending after 1 hour without activity (8 November 2026).
 - [x] **Two-step verification:** required for every staff member from launch, with a code sent to their work email for now (8 November 2026). An authenticator app can replace it later.
@@ -56,63 +57,68 @@ Each screen talks only to functions in `src/lib/api`. Until phase 7, those funct
 
 The API it will need: staff log in, log out, and "who is signed in", with the session cookie ending after 1 hour without activity, lockouts after repeated failures, and two-step verification by email: sending a 6-digit code to the staff member's work email, checking it, letting it expire after 10 minutes, and limiting resends and wrong guesses.
 
-- [ ] Add the stand-in to `src/lib/api`: example staff, clients, subscriptions, payments and site content, following the rules in "Decided". It refuses to run on the live site.
-- [ ] Build **Log in** from the mock: work email and password, no sign-up, and a note to ask for access.
-- [ ] Add `src/lib/auth` with one helper that every page and action uses to get the signed-in staff member, or send them to log in. This is where roles will go later.
-- [ ] Add **two-step verification**: after the password, ask for the 6-digit code emailed to the staff member's work email, with "Send a new code". Say which address it went to and that it expires in 10 minutes.
-- [ ] Log out, and send expired sessions back to log in, returning to the page they were on. Warn a few minutes before the hour runs out, so unsaved changes aren't lost.
-- [ ] Show the backend's messages for wrong details and lockouts.
-- [ ] Tests: every page and action refuses signed-out visitors and staff who haven't finished two-step verification; a changed or expired session is refused; and browser tests for log in with an emailed code, a wrong or expired code, log out and the redirect back. No test sends a real email.
+- [x] Add the stand-in to `src/lib/api`, starting with staff log in. Clients, subscriptions, payments and site content are added in the phases that need them. It refuses to run on the live site.
+- [x] Build **Log in** from the mock: work email and password, no sign-up, and a note to ask for access.
+- [x] Add `src/lib/auth` with one helper that every page and action uses to get the signed-in staff member, or send them to log in. This is where roles will go later.
+- [x] Add **two-step verification**: after the password, ask for the 6-digit code emailed to the staff member's work email, with "Send a new code". Say which address it went to and that it expires in 10 minutes.
+- [x] Log out, and send expired sessions back to log in, returning to the page they were on. Warn a few minutes before the hour runs out, so unsaved changes aren't lost.
+- [x] Show the backend's messages for wrong details and lockouts.
+- [x] Tests: every page and action refuses signed-out visitors and staff who haven't finished two-step verification; a changed or expired session is refused; and browser tests for log in with an emailed code, a wrong or expired code, log out and the redirect back. No test sends a real email.
 
 ## Phase 3: Clients
 
 The API it will need: search clients, and one client's details and account history. Sending a password reset email.
 
-- [ ] Build **Clients** from the mock: search by name, business or email, run on the server, with paging for long lists.
-- [ ] Build **Client details**: account details, how they sign in, when they joined, and their history with who made each change.
-- [ ] Add "Send a password reset email", with a confirmation.
-- [ ] Show only what each task needs, with no exports.
-- [ ] Tests: search and empty results, the details page's states, and the reset email flow.
+- [x] Build **Clients** from the mock: search by name, business or email, run on the server, with paging for long lists.
+- [x] Build **Client details**: account details, how they sign in, when they joined, and their history with who made each change.
+- [x] Add "Send a password reset email", with a confirmation.
+- [x] Show only what each task needs, with no exports.
+- [x] Tests: search and empty results, the details page's states, and the reset email flow.
 
 ## Phase 4: Subscriptions
 
 The API it will need: list and filter subscriptions; one client's subscription, services and payments; and cancelling, keeping a cancelled plan, changing services and changing plan on a client's behalf, under the same rules as clients.
 
-- [ ] Build **Subscriptions** from the mock, with the filters All, Active, Renewing in 7 days, and Cancelled, still running.
-- [ ] Add the subscription panel to **Client details**: plan, status, renewal date and reminder, changes left this month, setup fee, services, a waiting plan change, and payments.
-- [ ] **Cancel on a client's behalf:** confirm first, saying what happens, then show the cancelled state. Add "Keep the plan" to undo it while the paid period is running.
-- [ ] **Change services on a client's behalf**, within the plan's limits, showing the changes left.
-- [ ] **Change plan on a client's behalf**, starting at the next renewal.
-- [ ] Show payments from Flutterwave through the backend, never card details.
-- [ ] Tests: each filter, each action's confirmation and result, refusals explained by the backend, and keeping what was typed when a save fails.
+- [x] Build **Subscriptions** from the mock, with the filters All, Active, Renewing in 7 days, and Cancelled, still running.
+- [x] Add the subscription panel to **Client details**: plan, status, renewal date and reminder, changes left this month, setup fee, services, a waiting plan change, and payments.
+- [x] **Cancel on a client's behalf:** confirm first, saying what happens, then show the cancelled state. Add "Keep the plan" to undo it while the paid period is running.
+- [x] **Change services on a client's behalf**, within the plan's limits, showing the changes left.
+- [x] **Change plan on a client's behalf**, starting at the next renewal.
+- [x] Show payments from Flutterwave through the backend, never card details.
+- [x] Tests: each filter, each action's confirmation and result, refusals explained by the backend, and keeping what was typed when a save fails.
 
 ## Phase 5: Overview
 
 The API it will need: counts of active subscriptions and monthly income, renewals in the next 7 days with reminder status, cancelled plans still running, clients without a plan, and recent changes with who made them.
 
-- [ ] Build **Overview** from the mock, with each count linking to the filtered list behind it.
-- [ ] Tests: the counts' links, empty states, and the backend being unreachable.
+- [x] Build **Overview** from the mock, with each count linking to the filtered list behind it. Clients gained a "without a plan" filter for this.
+- [x] Tests: the counts' links, empty states, and the backend being unreachable.
 
 ## Phase 6: Site content
 
-The API it will need: reading and saving plans, prices, services and site text, and telling `WEB` to refresh its cached pages after a save.
+The API it will need: reading and saving plans, services, service groups and site text, and telling `WEB` to refresh its cached pages after a save. Services, groups and plan lines are records staff can add and edit, not fixed fields.
 
-- [ ] Build **Plans and prices** from the mock: price, changes a month, website included and "recommended". Before saving a price, say that new subscribers pay it straight away and existing subscribers from their next renewal.
-- [ ] Build **Services**: the "Shown on the site" switch. Hiding one asks first, saying it keeps running for clients who already have it until we let them know and move them on.
-- [ ] Build **Site text**: the home page headline, introduction and closing call to action, with more added as `WEB` reads them from the API.
-- [ ] Say when saved changes will appear on the website.
-- [ ] Tests: validation of prices and limits, each confirmation, and a saved change appearing on a `WEB` preview.
+Agreed on 8 November 2026, from the updated mock: staff can add services and groups and change what each plan lists without a developer. Adding a whole new plan comes later, because it needs its own prices and payment setup.
+
+- [x] Build **Plans and prices** from the mock: price, changes a month, how many services each plan includes from each group, the plan's other lines (add, reorder, remove), and "recommended" (one plan at a time). Before saving a price, say that new subscribers pay it straight away and existing subscribers from their next renewal. Custom stays quoted after the audit.
+- [x] Build **Services**: add and edit a service's name, the problem it solves, its group, and tick boxes for which plans include it. Warn, without blocking, when a lower plan includes a service but a higher plan doesn't. When a plan is unticked, say that clients on it who already have the service keep it until we let them know and move them on.
+- [x] Keep **showing and hiding a service** on the website. Hiding one asks first, saying it keeps running for clients who already have it until we let them know and move them on.
+- [x] Build **Service groups**: rename groups and add new ones, with the words used for one and several ("1 website or app"). A group appears on the website once a plan includes one of its services.
+- [x] Build **Site text**: the home page headline, introduction and closing call to action, with more added as `WEB` reads them from the API.
+- [x] Say when saved changes will appear on the website.
+- [x] Tests: validation of prices, limits and text, each warning and confirmation, and adding a service and a group. A saved change appearing on a `WEB` preview is checked in phase 7, when `WEB` reads from the API.
 
 ## Phase 7: Connect to the backend
 
-Needs `backend`. One vertical slice at a time: the backend writes and documents each API, then the matching functions in `src/lib/api` switch from the stand-in to it.
+Needs `backend`. One vertical slice at a time, following `backend/implementation_plan.md`: catalogue (backend phase 2), staff log in (3), clients (4), subscriptions (5 and 6), overview (7) and site content (8). The backend writes and documents each API, then the matching functions in `src/lib/api` switch from the stand-in to it.
 
-- [ ] Staff log in, sessions and emailed codes.
-- [ ] Clients.
-- [ ] Subscriptions, including actions on a client's behalf.
-- [ ] Overview figures.
-- [ ] Site content. With `WEB`: switch its `src/lib/catalogue` from the content files to the API, with cached pages that refresh after a save and keep the last good version if the API is down.
-- [ ] Remove the stand-in, and the "not found on the live site" guard.
+- [x] Staff log in, sessions and emailed codes (backend phase 3, 9 November 2026). The session cookie is now encrypted and holds the backend's token. Every page confirms it with the backend, and log out revokes it, so the logged-out marker from phase 6 is gone. The stand-in's log in is removed. Browser tests run against a real backend started by `backend/scripts/serve_for_e2e.sh`, and read codes from its email files. Signed-in pages need JavaScript: they stream in behind the loading screen once the backend confirms the session. Log in still works without it.
+- [x] Clients, with subscriptions (backend phases 5 and 6, 10 November 2026).
+- [x] Subscriptions, including actions on a client's behalf. Browser tests run one at a time against a backend seeded with the stand-in's clients and plans.
+- [x] Overview figures (backend phase 7, 10 November 2026).
+- [x] Site content (backend phase 8, 10 November 2026). With `WEB`: switch its `src/lib/catalogue` from the content files to the API, with cached pages that refresh after a save and keep the last good version if the API is down. `WEB` then lists each plan's lines and services from the data, with services naming the plans that include them instead of a lowest plan, and shows new service groups.
+- [x] Remove the stand-in (10 November 2026).
+- [ ] Remove the "not found on the live site" guard (backend phase 10, at launch).
 - [ ] Tests: each function against the real API's responses, including its errors.
 
 ## Phase 8: Final checks and launch
@@ -127,7 +133,7 @@ Needs `backend`. One vertical slice at a time: the backend writes and documents 
 
 ## Later, not in this plan
 
-- **Leads:** audit requests from the website, once lead capture moves to the backend.
+- [x] **Leads:** audit requests from the website (backend phase 9, 11 November 2026), from the approved mock.
 - **Authenticator app codes** in place of email codes, which are safer if a staff email account is ever compromised.
 - **Roles and permissions,** such as view-only staff or content-only editors, added in `src/lib/auth`.
 - **Managing staff accounts** from the dashboard.

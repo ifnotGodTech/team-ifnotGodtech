@@ -43,7 +43,7 @@ export function ConfirmPanel({ triggerLabel, title, children, confirmLabel, acti
       role="alertdialog"
       aria-labelledby={headingId}
       onKeyDown={(event) => event.key === "Escape" && setOpen(false)}
-      className="flex flex-col gap-3 rounded-[10px] border-2 border-maroon bg-maroon-tint px-5 py-4.5"
+      className="flex w-full flex-col gap-3 rounded-[10px] border-2 border-maroon bg-maroon-tint px-5 py-4.5"
     >
       <h3 id={headingId} ref={headingRef} tabIndex={-1} className="text-[1.1rem] font-extrabold">
         {title}

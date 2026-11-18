@@ -6,6 +6,12 @@ export type StaffMember = {
   email: string;
 };
 
+/** After the right code: the backend's token, kept only inside the encrypted session cookie. */
+export type SignedIn = {
+  token: string;
+  staff: StaffMember;
+};
+
 /** A log in waiting for its emailed code. */
 export type LoginChallenge = {
   challengeId: string;

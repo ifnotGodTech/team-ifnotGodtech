@@ -13,7 +13,16 @@ const dateTime = new Intl.DateTimeFormat("en-GB", {
   timeZone: "Africa/Lagos",
 });
 
+const weekdayDate = new Intl.DateTimeFormat("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "Africa/Lagos" });
+const dayMonth = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", timeZone: "Africa/Lagos" });
+
 export const formatNaira = (amount: number) => naira.format(amount);
+
+/** "Sunday 8 November 2026". */
+export const formatWeekdayDate = (iso: string) => weekdayDate.format(toDate(iso)).replace(",", "");
+
+/** "8 Nov". */
+export const formatDayMonth = (iso: string) => dayMonth.format(toDate(iso));
 
 /** "8 December 2026". Accepts an ISO date or date-time. */
 export const formatLongDate = (iso: string) => longDate.format(toDate(iso));

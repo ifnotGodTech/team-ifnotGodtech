@@ -44,3 +44,6 @@ next-env.d.ts
 # playwright
 /test-results/
 /playwright-report/
+
+# Browser tests: the saved staff session
+/e2e/.auth/

@@ -13,7 +13,7 @@ The dashboard stores no data of its own. Everything it shows or changes goes thr
 - **Users:** find a client, see their details and how they sign in, and help with access problems.
 - **Subscriptions:** see each client's plan, status, renewal date, chosen services, changes left this month and payments. Make changes on a client's behalf, such as cancelling, keeping a cancelled plan or swapping services, under the same rules clients follow on `WEB`.
 - **Site content:** plans, prices, services (including taking a service off the site with its `available` flag) and site text. `WEB` shows saved changes after its cached pages refresh.
-- **Leads:** audit requests from the website, once lead capture moves to the backend.
+- **Leads:** audit requests from the website: who asked, their problem, and whether the team has got back to them.
 
 ## Engineering Standards
 - Use TypeScript for all code in this project.
@@ -29,13 +29,16 @@ The dashboard stores no data of its own. Everything it shows or changes goes thr
 
 ## Folder Structure
 - `src/app/(auth)` (log in and log out, with no dashboard navigation)
-- `src/app/(dashboard)` (every signed-in page, behind one layout with the navigation; one folder per area: `users`, `subscriptions`, `content`, and later `leads`)
-- `src/components` (screens and their parts, grouped by area, plus shared `ui` primitives: buttons, inputs, tables, badges, confirm dialogs)
-- `src/lib/api` (the only route to the backend: one client, typed responses, failures turned into normalized errors)
-- `src/lib/auth` (reading the staff session on the server, and the one place where access is checked)
+- `src/app/(dashboard)` (every signed-in page, behind one layout with the navigation; one folder per area: `clients`, `subscriptions`, `leads`, `content`)
+- `src/components` (screens and their parts, grouped by area, plus shared `ui` primitives: buttons, inputs, tables, badges, confirm dialogs, and `forms` helpers that keep what was typed when a save fails)
+- `src/lib/api` (the only route to the backend: one client, typed responses, failures turned into normalized errors; one module per area: `staffAuth.ts`, `clients.ts`, `subscriptions.ts`, `overview.ts`, `leads.ts` and `content.ts`)
+- `src/lib/auth` (the encrypted staff session cookie, log in actions, and the one place where access is checked, confirming the token with the backend)
+- `src/lib/actions` (server actions that change data, each checking the session itself)
+- `src/lib/loaders` (data loading shared by several pages)
+- `src/proxy.ts` (restarts the 1-hour session on each request and sends signed-out visitors to log in; pages and actions still check the session themselves)
 - `src/shared` (validators, formatting for naira and dates, constants)
 - `src/types` (types matching the backend's API schema)
-- `e2e` (Playwright browser tests)
+- `e2e` (Playwright browser tests, against a real backend started by `backend/scripts/serve_for_e2e.sh`)
 
 ## Next.js Architecture Rules
 - Prefer Server Components. Use Client Components only for real interactivity, such as filters, forms and confirm dialogs.
@@ -58,7 +61,7 @@ Keep the first version simple. These are planned but not built yet:
 - Every page and action needs a signed-in staff member. Check on the server, never only by hiding things in the UI.
 - For now, every staff member can do everything: there are no roles or permissions yet. They come later, so every page and action checks access through one helper in `src/lib/auth`, where roles can be added without changing each page.
 - The backend still has the final say. If it refuses something, show a clear message.
-- Keep the session in a secure cookie that scripts in the browser can't read, ending after 1 hour without activity. Log out clears it. Warn before it ends, so unsaved changes aren't lost.
+- Keep the session in a secure cookie that scripts in the browser can't read, ending after 1 hour without activity. Log out revokes the backend's token, then clears it. Warn before it ends, so unsaved changes aren't lost.
 - Never put secrets or API keys in the browser bundle. Keep server-only environment variables separate from public ones.
 - Set a strict content security policy, forbid framing, and send `noindex` on every page, with `robots.txt` disallowing everything.
 - Rate limiting and lockouts for login are the backend's job. Show their messages clearly.
