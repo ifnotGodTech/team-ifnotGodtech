@@ -82,7 +82,7 @@ export function SubscriptionPanel({ clientId, clientName, subscription, catalogu
             {typeof plan.monthlyChanges === "number" ? `${subscription.changesLeftThisMonth} of ${plan.monthlyChanges}` : `${subscription.changesLeftThisMonth}, as agreed`}
           </Detail>
           <Detail term="Setup fee">
-            {subscription.setupFeePaidOn ? `Paid ${formatShortDate(subscription.setupFeePaidOn)}` : "Waived for paying upfront"}
+            {subscription.setupFeePaidOn ? `Paid ${formatShortDate(subscription.setupFeePaidOn)}` : "Not paid: waived"}
           </Detail>
           {pendingPlan && status === "active" && (
             <Detail term="Plan change">{`Moves to ${pendingPlan.name} on ${endDate}. Nothing to pay until then.`}</Detail>

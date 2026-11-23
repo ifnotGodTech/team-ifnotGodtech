@@ -36,7 +36,14 @@ export const SAMPLE_CATALOGUE: Catalogue = {
     service("document-reader", "agents", "Document reader", "pro", "Staff retype invoices and forms all day."),
     service("ai-call-agent", "agents", "AI call agent", "pro", "I miss calls and lose customers."),
   ],
-  billingTerms: { setupFee: 100_000, setupFeeWaivedFromMonths: 6, freeMonthsOnTwelve: 2 },
+  billingTerms: {
+    setupFee: 100_000,
+    monthlySetupFeeWaived: false,
+    sixMonthsSetupFeeWaived: true,
+    twelveMonthsSetupFeeWaived: false,
+    sixMonthsFreeMonths: 0,
+    twelveMonthsFreeMonths: 2,
+  },
 };
 
 /** The home page text, as WEB shows it today. */

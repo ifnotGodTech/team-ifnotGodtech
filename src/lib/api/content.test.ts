@@ -11,7 +11,14 @@ const sent = (n = 0) => {
 };
 const plan = { id: "growth", name: "Growth", monthlyPrice: 45000, monthlyChanges: 1, allowances: { everyday: 3, agents: "agreed" }, lines: ["Landing page"], recommended: true, tag: "extra fields are ignored" };
 const service = { id: "monthly-sales-report", group: "everyday", name: "Monthly sales report", problem: "I never know how sales went.", plans: ["growth", "pro", "custom"], available: true, catchAll: false };
-const terms = { setupFee: 100_000, setupFeeWaivedFromMonths: 6, freeMonthsOnTwelve: 2 };
+const terms = {
+  setupFee: 100_000,
+  monthlySetupFeeWaived: false,
+  sixMonthsSetupFeeWaived: true,
+  twelveMonthsSetupFeeWaived: false,
+  sixMonthsFreeMonths: 0,
+  twelveMonthsFreeMonths: 2,
+};
 const group = { id: "websites", name: "Websites", unitSingular: "website", unitPlural: "websites" };
 
 describe("site content API", () => {
@@ -67,8 +74,9 @@ describe("site content API", () => {
   });
 
   it("saves the setup fee and offers, and refuses a reply in another shape", async () => {
-    const lower = { setupFee: 50_000, setupFeeWaivedFromMonths: 12 as const, freeMonthsOnTwelve: 1 };
-    fetchMock.mockResolvedValueOnce(json(200, lower)).mockResolvedValueOnce(json(200, { ...lower, setupFeeWaivedFromMonths: 9 }));
+    const lower = { ...terms, setupFee: 50_000, monthlySetupFeeWaived: true };
+    // The backend also sends the old fields for a while; they're dropped.
+    fetchMock.mockResolvedValueOnce(json(200, { ...lower, setupFeeWaivedFromMonths: 1, freeMonthsOnTwelve: 2 })).mockResolvedValueOnce(json(200, { ...lower, monthlySetupFeeWaived: "yes" }));
 
     expect(await saveBillingTerms("t0ken", lower)).toEqual({ ok: true, data: lower });
     expect(sent(0)).toMatchObject({ url: "https://api.example.com/api/v1/staff/billing-terms/", method: "PUT", body: lower, headers: { authorization: "Bearer t0ken" } });
