@@ -10,7 +10,7 @@ vi.mock("@/lib/api/content", async () => {
   };
 });
 vi.mock("@/lib/auth", () => ({ requireStaff: async () => ({ staff: { email: "tunde@ifnotgod.com" }, token: "t0ken", expiresAt: 0 }) }));
-vi.mock("@/lib/actions/content", () => ({ savePlanAction: vi.fn(), saveServiceAction: vi.fn(), setServiceShownAction: vi.fn(), saveGroupAction: vi.fn(), saveSiteTextAction: vi.fn() }));
+vi.mock("@/lib/actions/content", () => ({ savePlanAction: vi.fn(), saveServiceAction: vi.fn(), setServiceShownAction: vi.fn(), saveGroupAction: vi.fn(), saveSiteTextAction: vi.fn(), saveBillingTermsAction: vi.fn() }));
 
 import SiteContentPage from "./page";
 
@@ -46,6 +46,17 @@ describe("site content page", () => {
   it("shows the groups with what each plan includes, and the site text", async () => {
     render(await show({ tab: "groups" }));
     expect(screen.getByText("6 services · Starter 1, Growth 3, Pro 6")).toBeInTheDocument();
+  });
+
+  it("shows the setup fee and offers to edit, with who a change affects", async () => {
+    render(await show({ tab: "billing" }));
+
+    expect(screen.getByRole("link", { name: "Setup fee and offers" })).toHaveAttribute("aria-current", "page");
+    const form = screen.getByRole("form", { name: "Setup fee and offers" });
+    expect(within(form).getByLabelText("Setup fee (₦)")).toHaveValue("100,000");
+    expect(within(form).getByLabelText("No setup fee when paying upfront for")).toHaveValue("6");
+    expect(within(form).getByLabelText("Months free when paying 12 months upfront")).toHaveValue("2");
+    expect(within(form).getByText(/Clients who have already paid a setup fee never pay it again/)).toBeInTheDocument();
   });
 
   it("shows the home page text to edit", async () => {

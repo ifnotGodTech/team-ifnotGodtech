@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   signedIn: true,
-  backend: { savePlan: vi.fn(), saveService: vi.fn(), setServiceShown: vi.fn(), saveGroup: vi.fn(), saveSiteText: vi.fn() },
+  backend: { savePlan: vi.fn(), saveService: vi.fn(), setServiceShown: vi.fn(), saveGroup: vi.fn(), saveSiteText: vi.fn(), saveBillingTerms: vi.fn() },
   redirect: vi.fn((path: string) => {
     throw new Error(`REDIRECT ${path}`);
   }),
@@ -17,7 +17,7 @@ vi.mock("@/lib/auth", () => ({
 }));
 vi.mock("@/lib/api/content", () => mocks.backend);
 
-import { saveGroupAction, savePlanAction, saveServiceAction, saveSiteTextAction, setServiceShownAction } from "./content";
+import { saveBillingTermsAction, saveGroupAction, savePlanAction, saveServiceAction, saveSiteTextAction, setServiceShownAction } from "./content";
 import { INITIAL_CONTENT_STATE } from "./formState";
 
 const form = (fields: [string, string][]) => {
@@ -58,11 +58,49 @@ describe("site content actions", () => {
     ["shown", () => setServiceShownAction(form([["serviceId", "lead-follow-up"], ["shown", "false"]]))],
     ["group", () => saveGroupAction(INITIAL_CONTENT_STATE, form([["name", "Websites"]]))],
     ["text", () => saveSiteTextAction(INITIAL_CONTENT_STATE, form([["headline", "Hello there"]]))],
+    ["billing", () => saveBillingTermsAction(INITIAL_CONTENT_STATE, form([["setupFee", "0"]]))],
   ])("%s refuses signed-out callers", async (_, run) => {
     mocks.signedIn = false;
 
     expect(await redirectedTo(run())).toBe("/login");
     Object.values(mocks.backend).forEach((fn) => expect(fn).not.toHaveBeenCalled());
+  });
+
+  it("saves the setup fee and offers, and says what the next checkout charges", async () => {
+    mocks.backend.saveBillingTerms.mockResolvedValue(OK);
+    const billing = (fee: string) => form([["setupFee", fee], ["setupFeeWaivedFromMonths", "12"], ["freeMonthsOnTwelve", "1"]]);
+
+    const lower = await saveBillingTermsAction(INITIAL_CONTENT_STATE, billing("₦50,000"));
+    const none = await saveBillingTermsAction(INITIAL_CONTENT_STATE, billing("0"));
+
+    expect(mocks.backend.saveBillingTerms).toHaveBeenNthCalledWith(1, "t0ken", { setupFee: 50_000, setupFeeWaivedFromMonths: 12, freeMonthsOnTwelve: 1 });
+    expect(lower.notice).toBe("Saved. The next checkout has a setup fee of ₦50,000. It appears on the website within a few minutes.");
+    expect(none.notice).toBe("Saved. The next checkout has no setup fee. It appears on the website within a few minutes.");
+  });
+
+  it("refuses setup fees and offers outside the rules before calling the backend", async () => {
+    const state = await saveBillingTermsAction(
+      INITIAL_CONTENT_STATE,
+      form([["setupFee", "-5"], ["setupFeeWaivedFromMonths", "9"], ["freeMonthsOnTwelve", "12"]])
+    );
+
+    expect(state.fieldErrors).toEqual({
+      setupFee: "Enter the setup fee in whole naira, such as 100,000, or 0 for none.",
+      setupFeeWaivedFromMonths: "Choose 6 or 12 months.",
+      freeMonthsOnTwelve: "Free months can be at most 11.",
+    });
+    expect(mocks.backend.saveBillingTerms).not.toHaveBeenCalled();
+  });
+
+  it("keeps the backend's message when it refuses the setup fee", async () => {
+    mocks.backend.saveBillingTerms.mockResolvedValueOnce({
+      ok: false,
+      error: { code: "VALIDATION", message: "Check the highlighted fields.", fieldErrors: { setupFee: "The setup fee can't be above ₦10,000,000." } },
+    });
+
+    const state = await saveBillingTermsAction(INITIAL_CONTENT_STATE, form([["setupFee", "100000"], ["setupFeeWaivedFromMonths", "6"], ["freeMonthsOnTwelve", "2"]]));
+
+    expect(state).toMatchObject({ formError: "Check the highlighted fields.", fieldErrors: { setupFee: "The setup fee can't be above ₦10,000,000." }, notice: null });
   });
 
   it("saves a plan from the form, and says when a new price applies", async () => {
