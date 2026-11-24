@@ -144,6 +144,48 @@ test("saves the site text, explaining text that's too short", async ({ page }) =
   await expect(page.getByLabel("Home page headline")).toHaveValue("Every problem has a tech solution.");
 });
 
+test("sets up a promotion for each way of paying, explaining values outside the rules, and records it", async ({ page }) => {
+  await logIn(page, "/content?tab=billing");
+  const form = page.getByRole("form", { name: "Setup fee and offers" });
+  const save = () => form.getByRole("button", { name: "Save setup fee and offers" }).click();
+
+  await form.getByLabel("Months free, 12 months upfront").fill("12");
+  await save();
+  await expect(form.getByText("Free months on 12 months can be at most 11.")).toBeVisible();
+
+  await form.getByLabel("Setup fee (₦)").fill("50,000");
+  await form.getByLabel("Setup fee, monthly").selectOption("waived");
+  await form.getByLabel("Months free, 6 months upfront").fill("1");
+  await form.getByLabel("Months free, 12 months upfront").fill("3");
+  await expect(form.getByText("12 months upfront: 3 months free, and a ₦50,000 setup fee")).toBeVisible();
+  await save();
+  await expect(form.getByRole("status")).toHaveText(
+    "Saved. From the next checkout: Monthly: no setup fee; 6 months upfront: 1 month free, and no setup fee; 12 months upfront: 3 months free, and a ₦50,000 setup fee. It appears on the website within a few minutes."
+  );
+
+  await page.reload();
+  const saved = page.getByRole("form", { name: "Setup fee and offers" });
+  await expect(saved.getByLabel("Setup fee (₦)")).toHaveValue("50,000");
+  await expect(saved.getByLabel("Setup fee, monthly")).toHaveValue("waived");
+  await expect(saved.getByLabel("Months free, 6 months upfront")).toHaveValue("1");
+  await expect(saved.getByLabel("Months free, 12 months upfront")).toHaveValue("3");
+
+  await page.goto("/");
+  await expect(
+    page.getByText("Changed the billing terms: setup fee from ₦100,000 to ₦50,000; monthly: setup fee now waived; 6 months upfront: free months from 0 to 1; 12 months upfront: free months from 2 to 3").first()
+  ).toBeVisible();
+
+  // Back to today's terms, for the tests after this one.
+  await page.goto("/content?tab=billing");
+  const reset = page.getByRole("form", { name: "Setup fee and offers" });
+  await reset.getByLabel("Setup fee (₦)").fill("100,000");
+  await reset.getByLabel("Setup fee, monthly").selectOption("charged");
+  await reset.getByLabel("Months free, 6 months upfront").fill("0");
+  await reset.getByLabel("Months free, 12 months upfront").fill("2");
+  await reset.getByRole("button", { name: "Save setup fee and offers" }).click();
+  await expect(reset.getByRole("status")).toContainText("Saved.");
+});
+
 for (const [label, width] of [
   ["phone", 375],
   ["tablet", 768],
@@ -153,7 +195,7 @@ for (const [label, width] of [
     await page.setViewportSize({ width, height: 800 });
     await logIn(page, "/content");
 
-    for (const path of ["/content", "/content?tab=services", "/content?tab=services&edit=new", "/content?tab=groups&edit=new", "/content?tab=text"]) {
+    for (const path of ["/content", "/content?tab=services", "/content?tab=services&edit=new", "/content?tab=groups&edit=new", "/content?tab=billing", "/content?tab=text"]) {
       await page.goto(path);
       await expect(page.getByRole("heading", { level: 1, name: "Site content" })).toBeVisible();
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), path).toBe(true);

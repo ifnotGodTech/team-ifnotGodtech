@@ -25,7 +25,7 @@ export type ClientSubscription = {
   /** The reminder before renewal, or null when the plan won't renew. */
   reminder: { dueOn: string; sentOn: string | null } | null;
   changesLeftThisMonth: number;
-  /** Null when the setup fee was waived for paying 6 or more months upfront. */
+  /** Null when the setup fee was waived for how they paid. */
   setupFeePaidOn: string | null;
   serviceIds: string[];
   /** A plan change waiting for the next renewal. */

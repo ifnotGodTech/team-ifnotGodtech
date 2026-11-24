@@ -47,6 +47,17 @@ export type Catalogue = {
   plans: Plan[];
   groups: ServiceGroup[];
   services: Service[];
+  billingTerms: BillingTerms;
+};
+
+/** The setup fee, in naira, and for each way of paying whether it's waived and the months free. One set for every plan. */
+export type BillingTerms = {
+  setupFee: number;
+  monthlySetupFeeWaived: boolean;
+  sixMonthsSetupFeeWaived: boolean;
+  twelveMonthsSetupFeeWaived: boolean;
+  sixMonthsFreeMonths: number;
+  twelveMonthsFreeMonths: number;
 };
 
 export type SiteText = {

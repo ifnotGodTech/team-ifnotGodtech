@@ -1,9 +1,9 @@
 import { z } from "zod";
-import type { Catalogue, GroupDraft, Plan, PlanId, PlanUpdate, Service, ServiceDraft, ServiceGroup, SiteText } from "@/types/catalogue";
+import type { BillingTerms, Catalogue, GroupDraft, Plan, PlanId, PlanUpdate, Service, ServiceDraft, ServiceGroup, SiteText } from "@/types/catalogue";
 import type { ApiResult } from "./errors";
 import { apiRequest } from "./http";
 
-// Site content, through the backend's /staff/catalogue/ and /staff/site-text/ endpoints. Each save is recorded
+// Site content, through the backend's /staff/catalogue/, /staff/site-text/ and /staff/billing-terms/ endpoints. Each save is recorded
 // with who made it, and the backend asks WEB to refresh its pages.
 
 const PLAN_IDS = ["starter", "growth", "pro", "custom"] as const satisfies readonly PlanId[];
@@ -29,7 +29,20 @@ const serviceSchema: z.ZodType<Service> = z.object({
   plans: z.array(z.string()).transform((ids) => ids.filter((id): id is (typeof PRICED)[number] => (PRICED as readonly string[]).includes(id))),
   available: z.boolean(),
 });
-const catalogueSchema: z.ZodType<Catalogue> = z.object({ plans: z.array(planSchema), groups: z.array(groupSchema), services: z.array(serviceSchema) });
+const billingTermsSchema: z.ZodType<BillingTerms> = z.object({
+  setupFee: z.number().int().min(0),
+  monthlySetupFeeWaived: z.boolean(),
+  sixMonthsSetupFeeWaived: z.boolean(),
+  twelveMonthsSetupFeeWaived: z.boolean(),
+  sixMonthsFreeMonths: z.number().int().min(0),
+  twelveMonthsFreeMonths: z.number().int().min(0),
+});
+const catalogueSchema: z.ZodType<Catalogue> = z.object({
+  plans: z.array(planSchema),
+  groups: z.array(groupSchema),
+  services: z.array(serviceSchema),
+  billingTerms: billingTermsSchema,
+});
 const siteTextSchema: z.ZodType<SiteText> = z.object({ headline: z.string(), introduction: z.string(), closingCallToAction: z.string() });
 
 const bearer = (token: string) => ({ authorization: `Bearer ${token}` });
@@ -76,4 +89,9 @@ export function saveGroup(token: string, { id, name, unitSingular, unitPlural }:
 
 export function saveSiteText(token: string, text: SiteText): Promise<ApiResult<SiteText>> {
   return apiRequest("/staff/site-text/", { method: "PUT", body: text, schema: siteTextSchema, headers: bearer(token) });
+}
+
+/** The next checkout uses the new terms. Nobody who has paid a setup fee pays it again. */
+export function saveBillingTerms(token: string, terms: BillingTerms): Promise<ApiResult<BillingTerms>> {
+  return apiRequest("/staff/billing-terms/", { method: "PUT", body: terms, schema: billingTermsSchema, headers: bearer(token) });
 }

@@ -1,5 +1,6 @@
 import { z } from "zod";
-import type { Plan, PlanId } from "@/types/catalogue";
+import { formatNaira } from "@/shared/format";
+import type { BillingTerms, Plan, PlanId } from "@/types/catalogue";
 
 // Rules for editing site content, shown in forms and checked again on the server.
 // The backend enforces them too and has the final say.
@@ -9,6 +10,27 @@ export const PRICE_RULE =
 export const WHEN_LIVE = "It appears on the website within a few minutes.";
 export const HIDE_RULE =
   "New clients won't see or choose it. It keeps running for clients who already have it, until we let them know and move them on.";
+
+export const BILLING_RULE =
+  "Changes apply to the next checkout. Clients who have already paid a setup fee never pay it again. A change to free months applies to upfront renewals from their next renewal, and their renewal reminder shows the amount.";
+export const MAX_SETUP_FEE = 10_000_000;
+
+/** Each way of paying, with its fields in the billing terms. Monthly has no free months: a ₦0 first payment can't save a card. */
+export const PAYMENT_OPTIONS = [
+  { label: "Monthly", waiver: "monthlySetupFeeWaived", freeMonths: null, maxFreeMonths: 0 },
+  { label: "6 months upfront", waiver: "sixMonthsSetupFeeWaived", freeMonths: "sixMonthsFreeMonths", maxFreeMonths: 5 },
+  { label: "12 months upfront", waiver: "twelveMonthsSetupFeeWaived", freeMonths: "twelveMonthsFreeMonths", maxFreeMonths: 11 },
+] as const;
+
+/** What clients see for each way of paying, such as "12 months upfront: 2 months free, and a ₦100,000 setup fee". */
+export function describeBillingTerms(terms: BillingTerms): string[] {
+  return PAYMENT_OPTIONS.map((option) => {
+    const free = option.freeMonths ? terms[option.freeMonths] : 0;
+    const fee = terms.setupFee > 0 && !terms[option.waiver] ? `a ${formatNaira(terms.setupFee)} setup fee` : "no setup fee";
+    const months = free ? `${free} ${free === 1 ? "month" : "months"} free, and ` : "";
+    return `${option.label}: ${months}${fee}`;
+  });
+}
 
 export const MAX_PLAN_LINES = 8;
 export const PRICED_PLANS: readonly PlanId[] = ["starter", "growth", "pro"];
@@ -67,6 +89,23 @@ export const groupSchema = z.object({
   name: text("a name", 2, 40),
   unitSingular: text("the word for one", 2, 40),
   unitPlural: text("the word for several", 2, 40),
+});
+
+const waiver = z.enum(["charged", "waived"], { message: "Choose charged or waived." }).transform((value) => value === "waived");
+
+export const billingTermsSchema = z.object({
+  setupFee: z
+    .string()
+    .trim()
+    .transform((value) => value.replace(/[,\s₦]/g, ""))
+    .pipe(z.string().regex(/^\d+$/, "Enter the setup fee in whole naira, such as 100,000, or 0 for none."))
+    .transform(Number)
+    .pipe(z.number().max(MAX_SETUP_FEE, `The setup fee must be ₦${MAX_SETUP_FEE.toLocaleString("en-NG")} or less.`)),
+  monthlySetupFeeWaived: waiver,
+  sixMonthsSetupFeeWaived: waiver,
+  twelveMonthsSetupFeeWaived: waiver,
+  sixMonthsFreeMonths: count("free months on 6 months", PAYMENT_OPTIONS[1].maxFreeMonths),
+  twelveMonthsFreeMonths: count("free months on 12 months", PAYMENT_OPTIONS[2].maxFreeMonths),
 });
 
 export const siteTextSchema = z.object({

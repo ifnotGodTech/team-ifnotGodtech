@@ -5,6 +5,7 @@ export const CONTENT_TABS = [
   { id: "plans", label: "Plans and prices" },
   { id: "services", label: "Services" },
   { id: "groups", label: "Service groups" },
+  { id: "billing", label: "Setup fee and offers" },
   { id: "text", label: "Site text" },
 ] as const;
 

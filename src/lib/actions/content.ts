@@ -6,7 +6,7 @@ import { z } from "zod";
 import type { ApiResult } from "@/lib/api/errors";
 import * as content from "@/lib/api/content";
 import { requireStaff } from "@/lib/auth";
-import { fieldErrorsOf, groupSchema, planSchema, serviceSchema, siteTextSchema, WHEN_LIVE } from "@/shared/content";
+import { billingTermsSchema, describeBillingTerms, fieldErrorsOf, groupSchema, planSchema, serviceSchema, siteTextSchema, WHEN_LIVE } from "@/shared/content";
 import { formatNaira } from "@/shared/format";
 import type { ContentFormState } from "./formState";
 
@@ -128,3 +128,26 @@ export async function saveSiteTextAction(_: ContentFormState, form: FormData): P
   revalidatePath("/content");
   return { formError: null, fieldErrors: {}, notice: `Saved. ${WHEN_LIVE}` };
 }
+
+export async function saveBillingTermsAction(_: ContentFormState, form: FormData): Promise<ContentFormState> {
+  const { token } = await requireStaff();
+  const parsed = billingTermsSchema.safeParse({
+    setupFee: String(form.get("setupFee") ?? ""),
+    monthlySetupFeeWaived: String(form.get("monthlySetupFeeWaived") ?? ""),
+    sixMonthsSetupFeeWaived: String(form.get("sixMonthsSetupFeeWaived") ?? ""),
+    twelveMonthsSetupFeeWaived: String(form.get("twelveMonthsSetupFeeWaived") ?? ""),
+    sixMonthsFreeMonths: String(form.get("sixMonthsFreeMonths") ?? ""),
+    twelveMonthsFreeMonths: String(form.get("twelveMonthsFreeMonths") ?? ""),
+  });
+  if (!parsed.success) return invalid(fieldErrorsOf(parsed.error));
+
+  const result = await call(() => content.saveBillingTerms(token, parsed.data));
+  if (!result?.ok) return failed(result);
+  revalidatePath("/content");
+  return {
+    formError: null,
+    fieldErrors: {},
+    notice: `Saved. From the next checkout: ${describeBillingTerms(parsed.data).join("; ")}. ${WHEN_LIVE}`,
+  };
+}
+
