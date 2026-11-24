@@ -31,8 +31,11 @@ const serviceSchema: z.ZodType<Service> = z.object({
 });
 const billingTermsSchema: z.ZodType<BillingTerms> = z.object({
   setupFee: z.number().int().min(0),
-  setupFeeWaivedFromMonths: z.union([z.literal(6), z.literal(12)]),
-  freeMonthsOnTwelve: z.number().int().min(0),
+  monthlySetupFeeWaived: z.boolean(),
+  sixMonthsSetupFeeWaived: z.boolean(),
+  twelveMonthsSetupFeeWaived: z.boolean(),
+  sixMonthsFreeMonths: z.number().int().min(0),
+  twelveMonthsFreeMonths: z.number().int().min(0),
 });
 const catalogueSchema: z.ZodType<Catalogue> = z.object({
   plans: z.array(planSchema),

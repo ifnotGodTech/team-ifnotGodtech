@@ -66,28 +66,38 @@ describe("site content actions", () => {
     Object.values(mocks.backend).forEach((fn) => expect(fn).not.toHaveBeenCalled());
   });
 
-  it("saves the setup fee and offers, and says what the next checkout charges", async () => {
+  it("saves the setup fee and offers for each way of paying, and says what the next checkout charges", async () => {
     mocks.backend.saveBillingTerms.mockResolvedValue(OK);
-    const billing = (fee: string) => form([["setupFee", fee], ["setupFeeWaivedFromMonths", "12"], ["freeMonthsOnTwelve", "1"]]);
+    const billing = (fee: string) => form([["setupFee", fee], ["monthlySetupFeeWaived", "waived"], ["sixMonthsSetupFeeWaived", "waived"], ["twelveMonthsSetupFeeWaived", "charged"], ["sixMonthsFreeMonths", "1"], ["twelveMonthsFreeMonths", "3"]]);
 
-    const lower = await saveBillingTermsAction(INITIAL_CONTENT_STATE, billing("₦50,000"));
+    const promotion = await saveBillingTermsAction(INITIAL_CONTENT_STATE, billing("₦50,000"));
     const none = await saveBillingTermsAction(INITIAL_CONTENT_STATE, billing("0"));
 
-    expect(mocks.backend.saveBillingTerms).toHaveBeenNthCalledWith(1, "t0ken", { setupFee: 50_000, setupFeeWaivedFromMonths: 12, freeMonthsOnTwelve: 1 });
-    expect(lower.notice).toBe("Saved. The next checkout has a setup fee of ₦50,000. It appears on the website within a few minutes.");
-    expect(none.notice).toBe("Saved. The next checkout has no setup fee. It appears on the website within a few minutes.");
+    expect(mocks.backend.saveBillingTerms).toHaveBeenNthCalledWith(1, "t0ken", {
+      setupFee: 50_000,
+      monthlySetupFeeWaived: true,
+      sixMonthsSetupFeeWaived: true,
+      twelveMonthsSetupFeeWaived: false,
+      sixMonthsFreeMonths: 1,
+      twelveMonthsFreeMonths: 3,
+    });
+    expect(promotion.notice).toBe(
+      "Saved. From the next checkout: Monthly: no setup fee; 6 months upfront: 1 month free, and no setup fee; 12 months upfront: 3 months free, and a ₦50,000 setup fee. It appears on the website within a few minutes."
+    );
+    expect(none.notice).toContain("12 months upfront: 3 months free, and no setup fee.");
   });
 
   it("refuses setup fees and offers outside the rules before calling the backend", async () => {
     const state = await saveBillingTermsAction(
       INITIAL_CONTENT_STATE,
-      form([["setupFee", "-5"], ["setupFeeWaivedFromMonths", "9"], ["freeMonthsOnTwelve", "12"]])
+      form([["setupFee", "-5"], ["monthlySetupFeeWaived", "maybe"], ["sixMonthsSetupFeeWaived", "waived"], ["twelveMonthsSetupFeeWaived", "charged"], ["sixMonthsFreeMonths", "6"], ["twelveMonthsFreeMonths", "12"]])
     );
 
     expect(state.fieldErrors).toEqual({
       setupFee: "Enter the setup fee in whole naira, such as 100,000, or 0 for none.",
-      setupFeeWaivedFromMonths: "Choose 6 or 12 months.",
-      freeMonthsOnTwelve: "Free months can be at most 11.",
+      monthlySetupFeeWaived: "Choose charged or waived.",
+      sixMonthsFreeMonths: "Free months on 6 months can be at most 5.",
+      twelveMonthsFreeMonths: "Free months on 12 months can be at most 11.",
     });
     expect(mocks.backend.saveBillingTerms).not.toHaveBeenCalled();
   });
@@ -98,7 +108,7 @@ describe("site content actions", () => {
       error: { code: "VALIDATION", message: "Check the highlighted fields.", fieldErrors: { setupFee: "The setup fee can't be above ₦10,000,000." } },
     });
 
-    const state = await saveBillingTermsAction(INITIAL_CONTENT_STATE, form([["setupFee", "100000"], ["setupFeeWaivedFromMonths", "6"], ["freeMonthsOnTwelve", "2"]]));
+    const state = await saveBillingTermsAction(INITIAL_CONTENT_STATE, form([["setupFee", "100000"], ["monthlySetupFeeWaived", "charged"], ["sixMonthsSetupFeeWaived", "waived"], ["twelveMonthsSetupFeeWaived", "charged"], ["sixMonthsFreeMonths", "0"], ["twelveMonthsFreeMonths", "2"]]));
 
     expect(state).toMatchObject({ formError: "Check the highlighted fields.", fieldErrors: { setupFee: "The setup fee can't be above ₦10,000,000." }, notice: null });
   });

@@ -123,7 +123,7 @@ export default async function SiteContentPage({ searchParams }: PageProps<"/cont
     return (
       <>
         {header}
-        <p className="max-w-2xl text-text-dim">One setup fee and one set of upfront offers for every plan. The pricing page and checkout show them.</p>
+        <p className="max-w-2xl text-text-dim">One setup fee for every plan, and for each way of paying, whether it&apos;s waived and the months free. The pricing page, checkout and AI assistant show them.</p>
         <BillingTermsForm action={saveBillingTermsAction} terms={catalogue.data.billingTerms} />
       </>
     );

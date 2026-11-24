@@ -54,8 +54,12 @@ describe("site content page", () => {
     expect(screen.getByRole("link", { name: "Setup fee and offers" })).toHaveAttribute("aria-current", "page");
     const form = screen.getByRole("form", { name: "Setup fee and offers" });
     expect(within(form).getByLabelText("Setup fee (₦)")).toHaveValue("100,000");
-    expect(within(form).getByLabelText("No setup fee when paying upfront for")).toHaveValue("6");
-    expect(within(form).getByLabelText("Months free when paying 12 months upfront")).toHaveValue("2");
+    expect(within(form).getByLabelText("Setup fee, monthly")).toHaveValue("charged");
+    expect(within(form).getByLabelText("Setup fee, 6 months upfront")).toHaveValue("waived");
+    expect(within(form).getByLabelText("Setup fee, 12 months upfront")).toHaveValue("charged");
+    expect(within(form).getByLabelText("Months free, 6 months upfront")).toHaveValue("0");
+    expect(within(form).getByLabelText("Months free, 12 months upfront")).toHaveValue("2");
+    expect(within(form).getByText("12 months upfront: 2 months free, and a ₦100,000 setup fee")).toBeInTheDocument();
     expect(within(form).getByText(/Clients who have already paid a setup fee never pay it again/)).toBeInTheDocument();
   });
 

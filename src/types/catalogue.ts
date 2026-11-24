@@ -50,12 +50,14 @@ export type Catalogue = {
   billingTerms: BillingTerms;
 };
 
-/** The setup fee and upfront offers, in naira. One set for every plan. */
+/** The setup fee, in naira, and for each way of paying whether it's waived and the months free. One set for every plan. */
 export type BillingTerms = {
   setupFee: number;
-  /** Paying this many months upfront waives the setup fee. */
-  setupFeeWaivedFromMonths: 6 | 12;
-  freeMonthsOnTwelve: number;
+  monthlySetupFeeWaived: boolean;
+  sixMonthsSetupFeeWaived: boolean;
+  twelveMonthsSetupFeeWaived: boolean;
+  sixMonthsFreeMonths: number;
+  twelveMonthsFreeMonths: number;
 };
 
 export type SiteText = {
